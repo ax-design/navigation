@@ -95,14 +95,14 @@ export class AxNavigationItem extends HTMLElement {
     <i></i>
 </div>
 <style>
-    :host { display: inline-block; position: relative; }
+    :host { display: inline-block; position: relative; box-sizing: border-box; margin-bottom: 0 !important; cursor: default; user-select: none; }
     :host([block]) { display: block; }
     :host([inline-block]) { display: inline-block; }
     :host([flex]) { display: flex; }
     :host([inline-flex]) { display: inline-flex; }
     :host([grid]) { display: grid; }
     :host([inline-grid]) { display: inline-grid; }
-    #main { min-width: 64px; min-height: 32px; overflow: visible; position: relative; }
+    #main { min-width: 64px; min-height: 32px; overflow: visible; }
     #slot { width: 100%; height: 100%; box-sizing: border-box; }
     i { width: var(--navigation-private-indicator-width); height: var(--navigation-private-indicator-height); left: var(--navigation-private-indicator-left); bottom: var(--navigation-private-indicator-bottom); background: var(--navigation-indicator-color); position: absolute; visibility: hidden; }
     i.show { visibility: visible; }

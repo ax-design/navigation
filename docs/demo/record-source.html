@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<head>
+  <title>AxNavigation Demo - Axiom Design System</title>
+
+  <style>
+    ax-navigation {
+      --navigation-indicator-color: #D0104C;
+    }
+
+    ax-navigation-item {
+      margin: 8px 16px;
+      padding: 8px 0;
+    }
+
+    .main {
+      margin: 100px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main">
+    <ax-navigation>
+      <ax-navigation-item id="test">Home</ax-navigation-item>
+      <ax-navigation-item>Apps</ax-navigation-item>
+      <ax-navigation-item>Games</ax-navigation-item>
+    </ax-navigation>
+  </div>
+  <script src="../../build/main.js"></script>
+  <script>AxNavigation.register()</script>
+  <script type="module">
+    //import { register } from 'https://unpkg.com/@ax-design/navigation/es/index.js';
+    //register();
+  </script>
+</body>
