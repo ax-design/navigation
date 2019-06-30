@@ -87,3 +87,19 @@ Navigation component uses custom properties to manage the style of the navigatio
 
 **Description:** The width of navigation indicator.
 
+## Events
+
+### Switch
+
+**Bubbles:** No
+
+**Cancelable:** No
+
+**Interface:** SwitchEvent
+
+**Description:** A `ax-navigation` element receives a switch event when the indicator switched from one item to another item.
+
+**Properties:**
+
+* **`SwitchEvent.detail.from`:** The highlighted element before user switched the tab;
+* **`SwitchEvent.detail.to`:** The highlighted element after user switched the tab.

@@ -43,7 +43,7 @@
     <section class="demo-block">
       <div class="demo">
         <ax-navigation>
-          <ax-navigation-item id="test">Home</ax-navigation-item>
+          <ax-navigation-item>Home</ax-navigation-item>
           <ax-navigation-item>Apps</ax-navigation-item>
           <ax-navigation-item>Games</ax-navigation-item>
         </ax-navigation>
@@ -80,8 +80,27 @@
 
     <section class="demo-block">
       <div class="demo">
+        <ax-navigation>
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item default>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>Default Item</h2>
+        <p>To change the default item, just simply add a default attribute to navigation item.</p>
+        <pre>&lt;ax-navigation&gt;
+    &lt;ax-navigation-item&gt;Home&lt;/ax-navigation-item&gt;
+    &lt;ax-navigation-item default&gt;Apps&lt;/ax-navigation-item&gt;
+    &lt;ax-navigation-item&gt;Games&lt;/ax-navigation-item&gt;
+  &lt;/ax-navigation&gt;</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
         <ax-navigation class="colored-indicator">
-          <ax-navigation-item id="test">Home</ax-navigation-item>
+          <ax-navigation-item>Home</ax-navigation-item>
           <ax-navigation-item>Apps</ax-navigation-item>
           <ax-navigation-item>Games</ax-navigation-item>
         </ax-navigation>
@@ -97,7 +116,7 @@
     <section class="demo-block">
       <div class="demo">
         <ax-navigation class="indicator-width">
-          <ax-navigation-item id="test">Home</ax-navigation-item>
+          <ax-navigation-item>Home</ax-navigation-item>
           <ax-navigation-item>Apps</ax-navigation-item>
           <ax-navigation-item>Games</ax-navigation-item>
         </ax-navigation>
@@ -113,7 +132,7 @@
     <section class="demo-block">
       <div class="demo">
         <ax-navigation class="indicator-speed">
-          <ax-navigation-item id="test">Home</ax-navigation-item>
+          <ax-navigation-item>Home</ax-navigation-item>
           <ax-navigation-item>Apps</ax-navigation-item>
           <ax-navigation-item>Games</ax-navigation-item>
         </ax-navigation>
@@ -125,10 +144,37 @@
 }</pre>
       </div>
     </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="switch-event">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+        <div class="switch-information">Try to click the navigation item.</div>
+      </div>
+      <div class="code">
+        <h2>Switch Event</h2>
+        <p>A `switch` event will be dispatched if you switched from one tab to another tab.</p>
+        <pre>document.querySelector('.switch-event').addEventListener('switch', (event) => {
+  document.querySelector('.switch-information').innerHTML = `You've switched from ${event.detail.from.innerText} to ${event.detail.to.innerText}`
+});</pre>
+      </div>
+    </section>
+
     <script src="../../build/main.js"></script>
     <script>AxNavigation.register()</script>
     <script type="module">
     //import { register } from 'https://unpkg.com/@ax-design/navigation/es/index.js';
     //register();
+    </script>
+
+    <script>
+      document.querySelector('.switch-event').addEventListener('switch', (event) => {
+        document.querySelector('.switch-information').innerHTML = `
+          You've switched from ${event.detail.from.innerText} to ${event.detail.to.innerText}
+        `
+      });
     </script>
 </body>

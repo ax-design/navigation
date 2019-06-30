@@ -1,7 +1,5 @@
 import IndicatorManager from './indicatorManager.js';
 
-const changeEvent = new Event('change');
-
 export class AxNavigation extends HTMLElement {
     static readonly ElementName = 'ax-navigation';
     private root = this.attachShadow({ mode: 'open' });
@@ -19,8 +17,9 @@ export class AxNavigation extends HTMLElement {
         if ($item === this.$currentItem) return;
 
         this.indicatorManager.switch(this.$currentItem, $item);
+        const switchEvent = new CustomEvent('switch', { detail: { from: this.$currentItem, to: $item } });
+        this.dispatchEvent(switchEvent);
         this.$currentItem = $item;
-        this.dispatchEvent(changeEvent);
     }
     connectedCallback() {
         this.addEventListener('click', this.handleClick);
