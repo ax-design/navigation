@@ -45,17 +45,24 @@ export class AxNavigation extends HTMLElement {
     :host([inline-grid]) { display: inline-grid; }
     #out { display: contents; }
     #in { display: block; position: relative; }
-    :host #in, :host([horizontal]) #in { margin-bottom: var(--navigation-indicator-width); }
-    :host([vertical]) #in { margin-left: var(--navigation-indicator-width); margin-bottom: auto;}
     canvas { pointer-events: none; position: absolute; image-rendering: pixelated; }
-    :host canvas, :host([horizontal]) canvas { width: 100%; height: var(--navigation-indicator-width); bottom: calc(var(--navigation-indicator-width) * -1); }
+    nav { display: flex; }
+    :host([horizontal]) #in { margin-bottom: var(--navigation-indicator-width); }
+    :host([vertical]) #in { margin-left: var(--navigation-indicator-width); margin-bottom: auto;}
+    :host([horizontal]) canvas { width: 100%; height: var(--navigation-indicator-width); bottom: calc(var(--navigation-indicator-width) * -1); }
     :host([vertical]) canvas { width: var(--navigation-indicator-width); height: 100%; left: calc(var(--navigation-indicator-width) * -1); }
-    :host nav, :host([horizontal]) nav { display: flex; }
     :host([vertical]) nav { flex-direction: column; }
-    :host ::slotted(ax-navigation-item), :host([horizontal]) ::slotted(ax-navigation-item) { --navigation-private-indicator-height: var(--navigation-indicator-width); --navigation-private-indicator-width: 100%; --navigation-private-indicator-left: 0; --navigation-private-indicator-bottom: calc(var(--navigation-indicator-width) * -1);}
-    :host([vertical]) ::slotted(ax-navigation-item) { --navigation-private-indicator-height: 100%; --navigation-private-indicator-width: var(--navigation-indicator-width); --navigation-private-indicator-left: calc(var(--navigation-indicator-width) * -1); --navigation-private-indicator-bottom: 0;}
+    :host([horizontal]) ::slotted(ax-navigation-item) { margin: 8px 16px; padding: 8px 0; margin-bottom: 0 !important; --navigation-private-indicator-height: var(--navigation-indicator-width); --navigation-private-indicator-width: 100%; --navigation-private-indicator-left: 0; --navigation-private-indicator-bottom: calc(var(--navigation-indicator-width) * -1);}
+    :host([vertical]) ::slotted(ax-navigation-item) { margin: 16px 16px; padding: 0 8px; margin-left: 0 !important; --navigation-private-indicator-height: 100%; --navigation-private-indicator-width: var(--navigation-indicator-width); --navigation-private-indicator-left: calc(var(--navigation-indicator-width) * -1); --navigation-private-indicator-bottom: 0;}
 </style>
 `
+        if (
+            this.attributes.getNamedItem('vertical') === null 
+            && this.attributes.getNamedItem('horizontal') === null
+        ) {
+            this.attributes.setNamedItem(document.createAttribute('horizontal'));
+        } 
+        
         this.indicatorManager = new IndicatorManager(this, this.$currentItem);
         this.canvas = this.root.querySelector('canvas')!;
         this.ctx = this.canvas.getContext('2d')!;
@@ -94,7 +101,7 @@ export class AxNavigationItem extends HTMLElement {
     <i></i>
 </div>
 <style>
-    :host { display: inline-block; position: relative; box-sizing: border-box; margin-bottom: 0 !important; cursor: default; user-select: none; }
+    :host { display: inline-block; position: relative; box-sizing: border-box; cursor: default; user-select: none; }
     :host([block]) { display: block; }
     :host([inline-block]) { display: inline-block; }
     :host([flex]) { display: flex; }
