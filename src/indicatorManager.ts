@@ -74,8 +74,6 @@ class IndicatorManager {
         growProgress = progress < animationBreakPoint ? growAnimationFn(progress / animationBreakPoint) : 1;
         cutProgress = progress > animationBreakPoint ? cutAnimationFn((progress - animationBreakPoint) / (1 - animationBreakPoint)) : 0;
 
-        cutStart = barStart = fromBox[negSide] - canvasBox[negSide];
-
         if (!reverse) {
           cutStart = barStart = fromBox[negSide] - canvasBox[negSide];
           barLength = fromBox[indicatorSize] + (toBox[posSide] - fromBox[posSide]) * growProgress;
