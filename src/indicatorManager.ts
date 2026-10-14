@@ -26,6 +26,9 @@ const SHAPE_FOLLOW_LIMIT = 5000;
 // An end is asked for its deformation while it still has this much of its travel to do; when its
 // travel is practically over the spring is released.
 const DEFORM_TRAVEL = 0.85;
+// The trailing end follows the leading one: it is asked for while the leading end is more than
+// half deformed, so the two overlap instead of waiting for the tail to start moving.
+const FOLLOW_HALF = 0.5;
 
 const navigationSchema = new StyleSchema(NAVIGATION_PROPERTIES);
 
@@ -444,12 +447,13 @@ class IndicatorManager {
         const progress = (time - this.animationStartTime) / style.speed;
         const grow = progress < animationBreakPoint ? growAnimationFn(progress / animationBreakPoint) : 1;
         const cut = progress > animationBreakPoint ? cutAnimationFn((progress - animationBreakPoint) / (1 - animationBreakPoint)) : 0;
-        // Each end's deformation is asked for while that end is still moving, and released when
-        // its travel is practically done, with its own spring in between. Written before the shape
-        // is read, so a frame draws the deformation of that frame.
+        // The leading end is asked for its deformation while it still has travel to do; the
+        // trailing end follows the leading one, so it starts growing once the head is past half of
+        // its deformation and starts shrinking again once the head is half way back. Written
+        // before the shape is read, so a frame draws the deformation of that frame.
         const dt = this.stepTime(time);
         this.stepDeform(this.lead, grow < DEFORM_TRAVEL ? 1 : 0, dt);
-        this.stepDeform(this.trail, progress >= animationBreakPoint && cut < DEFORM_TRAVEL ? 1 : 0, dt);
+        this.stepDeform(this.trail, this.lead.value > FOLLOW_HALF ? 1 : 0, dt);
         this.writeDeform();
         // The shape numbers are read again on every frame, because a style can shape them.
         this.values.values = this.binding.read();

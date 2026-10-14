@@ -132,9 +132,9 @@ The element also writes what each part of a movement is doing:
 * `--navigation-indicator-arrival` and `--navigation-indicator-follow` are the times the leading
   end takes to reach the item and the trailing end takes to follow it.
 * `--navigation-indicator-lead` and `--navigation-indicator-trail` are the deformation of those
-  ends. Each is driven by a spring of its own, released when that end has practically finished
-  its travel, so a feature shaped from it grows while its part of the movement runs and settles
-  again after it.
+  ends. Each is driven by a spring of its own: the leading end while it still has travel to do,
+  and the trailing end while the leading end is more than half deformed, so the two overlap
+  instead of waiting for the tail to start moving.
 
 The general `--navigation-indicator-deform-stiffness` and `--navigation-indicator-deform-damping`
 set how hard both springs follow; `--navigation-indicator-{lead,trail}-stiffness` and

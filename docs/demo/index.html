@@ -400,7 +400,7 @@
       </div>
       <div class="code">
         <h2>Animated Indicator</h2>
-        <p>The element drives the deformation of each end with a spring of its own, over that end's travel, and writes it as <code>--navigation-indicator-lead</code> and <code>--navigation-indicator-trail</code>. How hard those springs follow is set with <code>--navigation-indicator-deform-stiffness</code> and <code>--navigation-indicator-deform-damping</code>, or per end.</p>
+        <p>The element drives the deformation of each end with a spring of its own and writes it as <code>--navigation-indicator-lead</code> and <code>--navigation-indicator-trail</code>. The leading end is asked for while it still has travel to do; the trailing end follows it, so the two overlap. How hard they follow is set with <code>--navigation-indicator-deform-stiffness</code> and <code>--navigation-indicator-deform-damping</code>, or per end.</p>
         <pre>ax-navigation {
   --navigation-indicator-speed: 900ms;
   --navigation-indicator-width: 14px;
