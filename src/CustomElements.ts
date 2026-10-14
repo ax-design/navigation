@@ -1,12 +1,45 @@
+import { SHAPE } from '@ax-design/surface/schema';
 import IndicatorManager from './indicatorManager.js';
 
 export class AxNavigation extends HTMLElement {
     static readonly ElementName = 'ax-navigation';
+
+    static get observedAttributes(): string[] {
+        return ['vertical', 'horizontal'];
+    }
+
     public root = this.attachShadow({ mode: 'open' });
     public canvas: HTMLCanvasElement;
     public ctx: CanvasRenderingContext2D;
-    private indicatorManager: IndicatorManager;
+    private indicatorManager!: IndicatorManager;
     private $currentItem?: AxNavigationItem;
+    private resizeObserver: ResizeObserver | null = null;
+    private $slot: HTMLSlotElement | null = null;
+
+    // Only the first arrival matters: a later change must not take the highlight away from the
+    // item the user selected.
+    private onSlotChange = () => {
+        const current = this.$currentItem;
+        if (current && current.isConnected) return;
+        this.$currentItem = undefined;
+        this.resolveCurrentItem();
+        this.indicatorManager.requestRest();
+    };
+
+    get currentItem(): AxNavigationItem | undefined {
+        return this.resolveCurrentItem();
+    }
+
+    // The items may arrive after the constructor: an element built with createElement has none
+    // yet, and one whose children change gets its first item later. The first item, or the one
+    // marked default, becomes current when there is none.
+    private resolveCurrentItem(): AxNavigationItem | undefined {
+        if (this.$currentItem) return this.$currentItem;
+        const marked = this.querySelector(AxNavigationItem.ElementName + '[default]') as AxNavigationItem | null;
+        this.$currentItem =
+            marked || (this.querySelector(AxNavigationItem.ElementName) as AxNavigationItem | null) || undefined;
+        return this.$currentItem;
+    }
 
     handleClick = (event: MouseEvent) => {
         if (!event.target) return;
@@ -23,61 +56,89 @@ export class AxNavigation extends HTMLElement {
         this.$currentItem = $item;
     };
 
+    // Vertical and horizontal swap the canvas box and the canonical bar space, so the indicator
+    // is drawn again.
+    attributeChangedCallback(): void {
+        if (!this.indicatorManager) return;
+        this.indicatorManager.directionChanged();
+    }
+
     connectedCallback() {
+        // A navigation without either attribute is horizontal. This cannot happen in the
+        // constructor: a custom element constructor must not put attributes on the element it
+        // builds, or document.createElement fails with NotSupportedError.
+        if (
+            this.attributes.getNamedItem('vertical') === null
+            && this.attributes.getNamedItem('horizontal') === null
+        ) {
+            this.attributes.setNamedItem(document.createAttribute('horizontal'));
+        }
         this.addEventListener('click', this.handleClick);
+        if (!this.$slot) {
+            this.$slot = this.root.querySelector('slot');
+            if (this.$slot) this.$slot.addEventListener('slotchange', this.onSlotChange);
+        }
+        this.resolveCurrentItem();
+        // The detector reports style changes, including one report right after attaching; the
+        // resize observer catches the layout changes the detector cannot see.
+        this.indicatorManager.observe();
+        this.resizeObserver = new ResizeObserver(() => this.indicatorManager.requestRest());
+        this.resizeObserver.observe(this);
+        this.indicatorManager.requestRest();
     }
 
     disconnectedCallback() {
         this.removeEventListener('click', this.handleClick);
+        this.indicatorManager.unobserve();
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = null;
+        }
     }
 
     constructor() {
         super();
         let defaultItem;
-        this.root.innerHTML = `
-<div id="out">
-    <div id="in">
-        <canvas></canvas>
-        <nav>
-            <slot></slot>
-        </nav>
-    </div>
-</div>
-<style>
-    :host([block]) { display: block; }
-    :host([inline-block]) { display: inline-block; }
-    :host([flex]) { display: flex; }
-    :host([inline-flex]) { display: inline-flex; }
-    :host([grid]) { display: grid; }
-    :host([inline-grid]) { display: inline-grid; }
-    #out { display: contents; }
-    #in { display: block; position: relative; }
-    canvas { pointer-events: none; position: absolute; image-rendering: pixelated; }
-    nav { display: flex; }
-    :host([horizontal]) #in { margin-bottom: var(--navigation-indicator-width, 2px); }
-    :host([vertical]) #in { margin-left: var(--navigation-indicator-width, 2px); margin-bottom: auto;}
-    :host([horizontal]) canvas { width: 100%; height: var(--navigation-indicator-width, 2px); bottom: calc(var(--navigation-indicator-width, 2px) * -1); }
-    :host([vertical]) canvas { width: var(--navigation-indicator-width, 2px); height: 100%; left: calc(var(--navigation-indicator-width, 2px) * -1); }
-    :host([vertical]) nav { flex-direction: column; }
-    :host([horizontal]) ::slotted(ax-navigation-item) { margin: 8px 16px; padding: 8px 0; margin-bottom: 0 !important; --navigation-private-indicator-height: var(--navigation-indicator-width, 2px); --navigation-private-indicator-width: 100%; --navigation-private-indicator-left: 0; --navigation-private-indicator-bottom: calc(var(--navigation-indicator-width, 2px) * -1);}
-    :host([vertical]) ::slotted(ax-navigation-item) { margin: 16px 16px; padding: 0 8px; margin-left: 0 !important; --navigation-private-indicator-height: 100%; --navigation-private-indicator-width: var(--navigation-indicator-width, 2px); --navigation-private-indicator-left: calc(var(--navigation-indicator-width, 2px) * -1); --navigation-private-indicator-bottom: 0;}
-</style>
-`;
-        if (
-            this.attributes.getNamedItem('vertical') === null 
-            && this.attributes.getNamedItem('horizontal') === null
-        ) {
-            this.attributes.setNamedItem(document.createAttribute('horizontal'));
-        } 
-        
-        this.indicatorManager = new IndicatorManager(this, this.$currentItem);
+        this.root.innerHTML = [
+            '<div id="out">',
+            '    <div id="in">',
+            '        <canvas></canvas>',
+            '        <nav>',
+            '            <slot></slot>',
+            '        </nav>',
+            '    </div>',
+            '</div>',
+            '<style>',
+            // The shape properties are written on the host, so the fallback that passes a
+            // general property to each side belongs in this shadow root.
+            SHAPE.fallbackCss || '',
+            // The canvas covers the bar plus whatever an outward decoration needs on either
+            // side of it: the inner pad is toward the content, the outer pad away from it.
+            '    :host { --navigation-private-indicator-cross: calc(var(--navigation-indicator-width, 2px) + var(--navigation-private-indicator-pad-inner, 0px) + var(--navigation-private-indicator-pad-outer, 0px)); --navigation-private-indicator-outer: calc(var(--navigation-indicator-width, 2px) + var(--navigation-private-indicator-pad-outer, 0px)); }',
+            '    :host([block]) { display: block; }',
+            '    :host([inline-block]) { display: inline-block; }',
+            '    :host([flex]) { display: flex; }',
+            '    :host([inline-flex]) { display: inline-flex; }',
+            '    :host([grid]) { display: grid; }',
+            '    :host([inline-grid]) { display: inline-grid; }',
+            '    #out { display: contents; }',
+            '    #in { display: block; position: relative; }',
+            '    canvas { pointer-events: none; position: absolute; }',
+            '    nav { display: flex; }',
+            '    :host([horizontal]) #in { margin-bottom: var(--navigation-private-indicator-outer); }',
+            '    :host([vertical]) #in { margin-left: var(--navigation-private-indicator-outer); margin-bottom: auto; }',
+            '    :host([horizontal]) canvas { width: 100%; height: var(--navigation-private-indicator-cross); bottom: calc(var(--navigation-private-indicator-outer) * -1); }',
+            '    :host([vertical]) canvas { width: var(--navigation-private-indicator-cross); height: 100%; left: calc(var(--navigation-private-indicator-outer) * -1); }',
+            '    :host([vertical]) nav { flex-direction: column; }',
+            '    :host([horizontal]) ::slotted(ax-navigation-item) { margin: 8px 16px; padding: 8px 0; margin-bottom: 0 !important; }',
+            '    :host([vertical]) ::slotted(ax-navigation-item) { margin: 16px 16px; padding: 0 8px; margin-left: 0 !important; }',
+            '</style>',
+        ].join('\n');
         this.canvas = this.root.querySelector('canvas')!;
         this.ctx = this.canvas.getContext('2d')!;
-        defaultItem = this.querySelector(`${AxNavigationItem.ElementName}[default]`) as AxNavigationItem | null;
-
+        defaultItem = this.querySelector(AxNavigationItem.ElementName + '[default]') as AxNavigationItem | null;
         this.$currentItem = defaultItem || (this.querySelector(AxNavigationItem.ElementName) as AxNavigationItem | null) || undefined;
-
-        setTimeout(() => this.$currentItem && this.$currentItem.highlight(), 0);
+        this.indicatorManager = new IndicatorManager(this);
     }
 }
 
@@ -85,7 +146,6 @@ export class AxNavigationItem extends HTMLElement {
     static readonly ElementName = 'ax-navigation-item';
     private root = this.attachShadow({ mode: 'open' });
     public container!: AxNavigation | null;
-    private $indicator: HTMLElement;
 
     adoptedCallback() {
         this.connectedCallback();
@@ -99,37 +159,25 @@ export class AxNavigationItem extends HTMLElement {
         this.container = null;
     }
 
-    highlight() {
-        this.$indicator.classList.add('show');
-    }
-
-    deHighlight() {
-        this.$indicator.classList.remove('show');
-    }
-
     constructor() {
         super();
-        this.root.innerHTML = `
-<div class="main">
-    <div id="slot">
-        <slot></slot>
-    </div>
-    <i></i>
-</div>
-<style>
-    :host { display: inline-block; position: relative; box-sizing: border-box; cursor: default; user-select: none; }
-    :host([block]) { display: block; }
-    :host([inline-block]) { display: inline-block; }
-    :host([flex]) { display: flex; }
-    :host([inline-flex]) { display: inline-flex; }
-    :host([grid]) { display: grid; }
-    :host([inline-grid]) { display: inline-grid; }
-    #main { min-width: 64px; min-height: 32px; overflow: visible; }
-    #slot { width: 100%; height: 100%; box-sizing: border-box; }
-    i { width: var(--navigation-private-indicator-width, 0); height: var(--navigation-private-indicator-height, 0); left: var(--navigation-private-indicator-left, 0); bottom: var(--navigation-private-indicator-bottom, 0); background: var(--navigation-indicator-color, black); position: absolute; visibility: hidden; }
-    i.show { visibility: visible; }
-</style>`;
-
-        this.$indicator = this.root.querySelector('i')!;
+        this.root.innerHTML = [
+            '<div class="main">',
+            '    <div id="slot">',
+            '        <slot></slot>',
+            '    </div>',
+            '</div>',
+            '<style>',
+            '    :host { display: inline-block; position: relative; box-sizing: border-box; cursor: default; user-select: none; }',
+            '    :host([block]) { display: block; }',
+            '    :host([inline-block]) { display: inline-block; }',
+            '    :host([flex]) { display: flex; }',
+            '    :host([inline-flex]) { display: inline-flex; }',
+            '    :host([grid]) { display: grid; }',
+            '    :host([inline-grid]) { display: inline-grid; }',
+            '    #main { min-width: 64px; min-height: 32px; overflow: visible; }',
+            '    #slot { width: 100%; height: 100%; box-sizing: border-box; }',
+            '</style>',
+        ].join('\n');
     }
 }

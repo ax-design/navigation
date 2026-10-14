@@ -89,6 +89,37 @@ Navigation component uses custom properties to manage the style of the navigatio
 
 **Description:** The width of navigation indicator.
 
+### Shape
+
+The indicator is a shape of [@ax-design/surface](https://github.com/ax-design/surface), styled
+with that contract: `--ax-radius`, `--ax-corner-shape`,
+`--ax-corner-{corner}-{radius,shape,shift-x,shift-y,shoulder-radius}` and
+`--ax-edge-{side}-{kind,depth,span,at,ratio,tip-radius,shoulder-radius}`, where `{corner}` is one
+of `top-left`, `top-right`, `bottom-right`, `bottom-left` and `{side}` is one of `top`, `right`,
+`bottom`, `left`. The general forms (`--ax-edge-kind` and friends) set every side at once. With
+none of them set the indicator is a plain rectangle.
+
+```css
+ax-navigation {
+  --navigation-indicator-width: 12px;
+  --ax-radius: 4px;
+  --ax-corner-top-left-shape: bevel;
+  --ax-corner-bottom-right-shift-x: 8px; /* a parallelogram */
+}
+```
+
+The shape is drawn into the bar the current item occupies: `--navigation-indicator-width`
+across the bar, the item's length along it. Both directions share that frame, so in a
+`vertical` navigation `top` and `bottom` are still the two long sides, `top` facing the
+content, and `right` and `left` are still the end the indicator moves toward and the end it
+starts from. `--ax-edge-{side}-at` is proportional along its side, so a decoration cannot be
+pinned a fixed distance from the end of the bar.
+
+The border and tilt properties of surface are not read. The resting indicator is drawn on the
+same canvas as the moving one, so the two always agree. The layout keeps free the space an
+outward feature takes on the side away from the content; on the side facing the content it draws
+over the items.
+
 ## Events
 
 ### Switch

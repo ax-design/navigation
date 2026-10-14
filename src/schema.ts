@@ -1,6 +1,12 @@
 import type { PropertySpec } from '@ax-design/typed-om';
+import { SHAPE } from '@ax-design/surface/schema';
 
+// The shape of the indicator is the Axiom surface contract: --ax-radius, --ax-corner-* and
+// --ax-edge-{top,right,bottom,left}-*. The general properties (--ax-edge-span and friends) are
+// not read here; they are registered from SHAPE.shared and reach every side through
+// SHAPE.fallbackCss, which the shadow root includes. See the surface README for the names.
 export const NAVIGATION_PROPERTIES: PropertySpec[] = [
+    ...SHAPE.read,
     {
         name: '--navigation-indicator-color',
         syntax: { type: 'color' },
@@ -15,35 +21,13 @@ export const NAVIGATION_PROPERTIES: PropertySpec[] = [
         inherits: true,
         register: true,
     },
-    {
-        name: '--navigation-private-indicator-width',
-        syntax: { type: 'length-percentage' },
-        initial: '0px',
-        inherits: true,
-        register: true,
-    },
-    {
-        name: '--navigation-private-indicator-height',
-        syntax: { type: 'length-percentage' },
-        initial: '0px',
-        inherits: true,
-        register: true,
-    },
-    {
-        name: '--navigation-private-indicator-left',
-        syntax: { type: 'length-percentage' },
-        initial: '0px',
-        inherits: true,
-        register: true,
-    },
-    {
-        name: '--navigation-private-indicator-bottom',
-        syntax: { type: 'length-percentage' },
-        initial: '0px',
-        inherits: true,
-        register: true,
-    },
 ];
+
+// Written by the component, never authored, and left unregistered on purpose: an unregistered
+// custom property inherits into the shadow root, and the change detector does not watch a value
+// the component writes itself.
+export const PAD_INNER = '--navigation-private-indicator-pad-inner';
+export const PAD_OUTER = '--navigation-private-indicator-pad-outer';
 
 export const SPEED_PROPERTY = {
     name: '--navigation-indicator-speed',
