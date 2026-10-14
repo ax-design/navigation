@@ -1,6 +1,6 @@
 {
     "name": "@ax-design/navigation",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Web component that implement Navigation Indicator animation of Axiom Design System.",
     "main": "build/main.js",
     "module": "es/index.js",
@@ -16,10 +16,10 @@
     "license": "MIT",
     "sideEffects": false,
     "devDependencies": {
-        "@types/bezier-easing": "^2.0.0",
+        "@types/bezier-easing": "^2.1.6",
         "@types/bun": "latest",
-        "playwright": "^1.64.0",
-        "typescript": "^5.6.0"
+        "playwright": "^1.64.1",
+        "typescript": "^5.9.3"
     },
     "scripts": {
         "build": "bun scripts/build.ts",
@@ -31,7 +31,7 @@
     },
     "dependencies": {
         "@ax-design/shape": "^0.2.0",
-        "@ax-design/surface": "^0.2.3",
+        "@ax-design/surface": "^0.2.4",
         "@ax-design/typed-om": "^0.1.0",
         "bezier-easing": "^2.1.0"
     },
