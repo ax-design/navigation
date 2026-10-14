@@ -186,9 +186,8 @@ async function run() {
         'strip right ' + vBox.right.toFixed(1) + ' of ' + vprobe.canvas.getBoundingClientRect().width.toFixed(1)
     );
 
-    // The element carries the direction while the indicator runs. A style on the mark can run for
-    // exactly as long as the movement, so its features are gone when the bar lands, instead of
-    // catching up with it afterwards.
+    // The element carries the direction while the indicator runs, and the time each part of the
+    // movement takes, so a feature can live inside the part whose end carries it.
     const anim = document.createElement(AxNavigation.ElementName) as AxNavigation;
     anim.className = 'animated-shape';
     anim.innerHTML = '<ax-navigation-item>One</ax-navigation-item><ax-navigation-item>Two</ax-navigation-item><ax-navigation-item>Three</ax-navigation-item>';
@@ -203,44 +202,66 @@ async function run() {
 
     animTwo.click();
     check('the indicator carries the direction while it runs', anim.getAttribute('moving') === 'forward', 'moving=' + anim.getAttribute('moving'));
-    await frames(16);
-    const midFlight = painted(anim);
-    const twoRight = animTwo.getBoundingClientRect().right - animBox.left;
+    // A registered time computes in seconds, a registered length in pixels.
+    const timeMs = (name: string) => {
+        const text = getComputedStyle(anim).getPropertyValue(name).trim();
+        return text.endsWith('ms') ? parseFloat(text) : parseFloat(text) * 1000;
+    };
+    const lengthPx = (name: string) => parseFloat(getComputedStyle(anim).getPropertyValue(name)) || 0;
+    const arrival = timeMs('--navigation-indicator-arrival');
+    const follow = timeMs('--navigation-indicator-follow');
     check(
-        'the end feature is out in the middle of the movement',
-        midFlight.right > twoRight + 4,
-        'painted right ' + midFlight.right.toFixed(1) + ', item right ' + twoRight.toFixed(1)
+        'the element publishes the time of each part of the movement',
+        arrival > 0 && Math.abs(arrival + follow - 600) < 2,
+        'arrival ' + arrival + ', follow ' + follow
     );
 
-    // The animation brings the features back on its own, so nothing is left to retract after the
-    // bar has landed.
+    // The point grows and is gone again inside the leading end's own travel. It rides the head,
+    // which is still on its way, so it never reaches past the target's far edge.
+    const twoRight = animTwo.getBoundingClientRect().right - animBox.left;
+    let pointOut = 0;
+    let pointClearAtArrival = true;
+    const started = performance.now();
+    for (let i = 0; i < 40; i++) {
+        await frames(1);
+        const t = performance.now() - started;
+        const depth = lengthPx('--ax-edge-right-depth');
+        if (t < arrival - 25) {
+            if (depth > pointOut) pointOut = depth;
+        } else if (t >= arrival) {
+            pointClearAtArrival = depth < 0.5 && painted(anim).right <= twoRight + 2.5;
+            break;
+        }
+    }
+    check('the point is out while the leading end travels', pointOut > 4, 'longest ' + pointOut.toFixed(1) + 'px');
+    check(
+        'the point is gone when the leading end lands',
+        pointClearAtArrival,
+        'painted right ' + painted(anim).right.toFixed(1) + ', item right ' + twoRight.toFixed(1)
+    );
+
+    // The notch belongs to the trailing end, and the bar is plain once it has arrived.
     let backAtLanding = false;
-    let stillOut = false;
     for (let i = 0; i < 60 && !backAtLanding; i++) {
         await frames(1);
         if (anim.hasAttribute('moving')) continue;
-        const now = painted(anim);
-        if (now.right > twoRight + 3) stillOut = true;
-        backAtLanding = now.right <= twoRight + 3;
+        backAtLanding = painted(anim).right <= twoRight + 3;
     }
-    check(
-        'the end feature is gone as soon as the bar lands',
-        backAtLanding && !stillOut,
-        'back at landing ' + backAtLanding + ', a frame was still out ' + stillOut
-    );
+    check('the bar is plain when it lands', backAtLanding);
 
-    // Interrupting starts the movement over, and the animation on the mark starts over with it.
+    // Interrupting starts the movement over, and the animation on it starts over with it.
     animThree.click();
     await frames(6);
     animOne.click();
-    await frames(16);
+    await frames(6);
     const afterInterrupt = painted(anim);
     const oneLeft = animOne.getBoundingClientRect().left - animBox.left;
     check('the direction follows an interrupted movement', anim.getAttribute('moving') === 'backward', 'moving=' + anim.getAttribute('moving'));
+    const pointAfterInterrupt = lengthPx('--ax-edge-left-depth');
     check(
-        'the end feature is out again after a movement was interrupted',
-        afterInterrupt.left < oneLeft - 4,
-        'painted left ' + afterInterrupt.left.toFixed(1) + ', item left ' + oneLeft.toFixed(1)
+        'the point is out again after a movement was interrupted',
+        pointAfterInterrupt > 4,
+        'leading depth ' + pointAfterInterrupt.toFixed(1) + ', painted left ' + afterInterrupt.left.toFixed(1)
     );
     await frames(120);
     const settled = painted(anim);

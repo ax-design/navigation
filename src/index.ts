@@ -1,10 +1,10 @@
 import { canRegister, registerProperties } from '@ax-design/typed-om';
 import { SHAPE } from '@ax-design/surface/schema';
 import { AxNavigation, AxNavigationItem } from './CustomElements.js';
-import { NAVIGATION_PROPERTIES, SPEED_PROPERTY } from './schema.js';
+import { NAVIGATION_PROPERTIES, SPEED_PROPERTY, WINDOW_PROPERTIES } from './schema.js';
 
 export { AxNavigation, AxNavigationItem } from './CustomElements.js';
-export { NAVIGATION_PROPERTIES, SPEED_PROPERTY } from './schema.js';
+export { NAVIGATION_PROPERTIES, SPEED_PROPERTY, WINDOW_PROPERTIES } from './schema.js';
 
 let registered = false;
 
@@ -13,10 +13,13 @@ export function register(): void {
     registered = true;
 
     if (canRegister()) {
-        try {
-            (CSS as unknown as { registerProperty: (d: unknown) => void }).registerProperty(SPEED_PROPERTY);
-        } catch (error) {
-            if (!error || (error as Error).name !== 'InvalidModificationError') throw error;
+        const registerProperty = (CSS as unknown as { registerProperty: (d: unknown) => void }).registerProperty.bind(CSS);
+        for (const property of [SPEED_PROPERTY, ...WINDOW_PROPERTIES]) {
+            try {
+                registerProperty(property);
+            } catch (error) {
+                if (!error || (error as Error).name !== 'InvalidModificationError') throw error;
+            }
         }
     }
     // The general shape properties (--ax-edge-span and friends) are registered apart from the

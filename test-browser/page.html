@@ -9,25 +9,24 @@
     .custom-color { --navigation-indicator-color: red; }
     .custom-width { --navigation-indicator-width: 6px; }
     .custom-speed { --navigation-indicator-speed: 100ms; }
-    /* A shape animation that runs on the moving mark for as long as the movement lasts. */
+    /* Each end carries a feature that is gone by the time that end arrives. */
     .animated-shape {
+      --navigation-indicator-speed: 600ms;
       --ax-edge-right-kind: triangle;
       --ax-edge-right-span: 100%;
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
     }
-    .animated-shape[moving="forward"] { animation: test-sharpen-forward var(--navigation-indicator-speed, 600ms) linear; }
-    .animated-shape[moving="backward"] { animation: test-sharpen-backward var(--navigation-indicator-speed, 600ms) linear; }
-    @keyframes test-sharpen-forward {
-      0% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
-      45% { --ax-edge-right-depth: 9px; --ax-edge-left-depth: -7px; }
-      100% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
+    .animated-shape[moving="forward"] {
+      animation: test-point-forward var(--navigation-indicator-arrival) linear, test-notch-forward var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
     }
-    @keyframes test-sharpen-backward {
-      0% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
-      45% { --ax-edge-left-depth: 9px; --ax-edge-right-depth: -7px; }
-      100% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
+    .animated-shape[moving="backward"] {
+      animation: test-point-backward var(--navigation-indicator-arrival) linear, test-notch-backward var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
     }
+    @keyframes test-point-forward { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: 9px; } 100% { --ax-edge-right-depth: 0px; } }
+    @keyframes test-notch-forward { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: -7px; } 100% { --ax-edge-left-depth: 0px; } }
+    @keyframes test-point-backward { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: 9px; } 100% { --ax-edge-left-depth: 0px; } }
+    @keyframes test-notch-backward { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: -7px; } 100% { --ax-edge-right-depth: 0px; } }
   </style>
 </head>
 <body>

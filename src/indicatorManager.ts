@@ -4,7 +4,7 @@ import type { PropertyValue } from '@ax-design/typed-om';
 import { Values, shapeSpecFrom } from '@ax-design/surface/schema';
 import { resolve, traceContour } from '@ax-design/shape';
 import { AxNavigation, AxNavigationItem } from './CustomElements.js';
-import { NAVIGATION_PROPERTIES, PAD_INNER, PAD_OUTER } from './schema.js';
+import { ARRIVAL_PROPERTY, FOLLOW_PROPERTY, NAVIGATION_PROPERTIES, PAD_INNER, PAD_OUTER } from './schema.js';
 import { along, directionOf, matrix } from './bar.js';
 import type { Along, Box, Direction } from './bar.js';
 
@@ -196,8 +196,12 @@ class IndicatorManager {
         this.animationStartTime = null;
         this.$from = $from;
         this.$to = $to;
-        // Nothing to move from: the indicator is simply drawn where it belongs.
-        if ($from) this.markMoving(this.isForward($from, $to) ? 'forward' : 'backward', interrupting);
+        // Nothing to move from: the indicator is simply drawn where it belongs. The style is read
+        // first, so the times a movement is animated on are written before the mark appears.
+        if ($from) {
+            if (!this.style) this.styleNow();
+            this.markMoving(this.isForward($from, $to) ? 'forward' : 'backward', interrupting);
+        }
         this.cancelRest();
         this.schedule();
     }
@@ -213,7 +217,11 @@ class IndicatorManager {
     private readStyle(): IndicatorStyle {
         this.values.values = this.binding.read();
         const direction = directionOf(this.$container);
+        const speed = parseSpeed(this.$container);
         const thickness = Math.max(0, this.readNumber('--navigation-indicator-width', 2));
+        // The two parts of a movement, as times a style can animate on.
+        this.setTime(ARRIVAL_PROPERTY, speed * animationBreakPoint);
+        this.setTime(FOLLOW_PROPERTY, speed * (1 - animationBreakPoint));
         // Outward features stick out of the bar: the canvas box and the space the layout keeps
         // free have to cover them. The overhang does not depend on how long the bar is, so one
         // measurement at the container's own length is enough.
@@ -225,7 +233,7 @@ class IndicatorManager {
         this.setPad(PAD_INNER, padInner);
         this.setPad(PAD_OUTER, padOuter);
         return {
-            speed: parseSpeed(this.$container),
+            speed,
             color: toCssColor(this.binding.get('--navigation-indicator-color')),
             thickness,
             direction,
@@ -241,6 +249,12 @@ class IndicatorManager {
 
     private setPad(name: string, value: number): void {
         const text = value + 'px';
+        if (this.$container.style.getPropertyValue(name) === text) return;
+        this.$container.style.setProperty(name, text);
+    }
+
+    private setTime(name: string, value: number): void {
+        const text = Math.max(0, Math.round(value)) + 'ms';
         if (this.$container.style.getPropertyValue(name) === text) return;
         this.$container.style.setProperty(name, text);
     }

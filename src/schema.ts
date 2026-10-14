@@ -35,3 +35,25 @@ export const SPEED_PROPERTY = {
     initialValue: '600ms',
     inherits: true,
 };
+
+// A movement is two parts: the leading end takes the first to reach the item and the trailing
+// end the second to follow it. The component writes them, so a style can give an animation the
+// length of the part whose end carries its feature. Registered apart from NAVIGATION_PROPERTIES:
+// they are written here, not read, and the change detector does not watch them.
+export const ARRIVAL_PROPERTY = '--navigation-indicator-arrival';
+export const FOLLOW_PROPERTY = '--navigation-indicator-follow';
+
+export const WINDOW_PROPERTIES = [
+    {
+        name: ARRIVAL_PROPERTY,
+        syntax: '<time>',
+        initialValue: '0ms',
+        inherits: true,
+    },
+    {
+        name: FOLLOW_PROPERTY,
+        syntax: '<time>',
+        initialValue: '0ms',
+        inherits: true,
+    },
+];
