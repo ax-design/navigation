@@ -9,7 +9,10 @@ const server = Bun.serve({
             pathname = '/docs/demo/index.html';
         }
         const file = Bun.file(join(root, pathname.startsWith('/') ? pathname.slice(1) : pathname));
-        return file.size ? new Response(file) : new Response('Not found', { status: 404 });
+        if (!file.size) return new Response('Not found', { status: 404 });
+        // Never let a browser keep a bundle or a demo page from an earlier run: the demo is served
+        // from a working tree whose build changes as the component does.
+        return new Response(file, { headers: { 'Cache-Control': 'no-store' } });
     },
 });
 console.log(`Demo running at ${server.url}`);
