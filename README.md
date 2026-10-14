@@ -129,13 +129,17 @@ away when the indicator arrives, and an interrupted movement starts it over.
 
 A movement lasts `--navigation-indicator-speed`, so a transition on a shape property that starts
 when the mark appears ends after the indicator has landed. An animation of that length runs with
-the movement instead and can bring the shape back before it lands. The canvas reads the shape
-properties while they change, so it draws either of them.
+the movement instead. A movement has two parts: the leading end reaches the item at 30% of the
+speed and the trailing end follows until the end. A feature grows while the end that carries it
+travels, and is back to a plain side before the bar settles, so the last part of a movement only
+moves.
 
 ```css
 ax-navigation {
   --ax-edge-right-kind: triangle;
   --ax-edge-right-span: 100%;
+  --ax-edge-left-kind: triangle;
+  --ax-edge-left-span: 100%;
 }
 
 ax-navigation[moving="forward"] {
@@ -143,9 +147,11 @@ ax-navigation[moving="forward"] {
 }
 
 @keyframes sharpen {
-  0% { --ax-edge-right-depth: 0px; }
-  45% { --ax-edge-right-depth: 9px; }
-  100% { --ax-edge-right-depth: 0px; }
+  0% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
+  30% { --ax-edge-right-depth: 9px; --ax-edge-left-depth: 0px; }
+  50% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: -7px; }
+  75% { --ax-edge-left-depth: 0px; }
+  100% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
 }
 ```
 
