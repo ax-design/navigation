@@ -131,15 +131,19 @@ The element also writes what each part of a movement is doing:
 
 * `--navigation-indicator-arrival` and `--navigation-indicator-follow` are the times the leading
   end takes to reach the item and the trailing end takes to follow it.
-* `--navigation-indicator-lead` and `--navigation-indicator-trail` are how far those parts are:
-  the leading end runs from 0 at the start of a movement to 1 when it arrives, and the trailing
-  end from 0 then to 1 when the bar lands. Both are plain ramps, so a style gives a feature its
-  own curve over them instead of inheriting the easing of the bar.
+* `--navigation-indicator-lead` and `--navigation-indicator-trail` are the deformation of those
+  ends. Each is driven by a spring of its own, released when that end has practically finished
+  its travel, so a feature shaped from it grows while its part of the movement runs and settles
+  again after it.
 
-A feature shaped over a ramp with `calc()` and `min()` grows and shrinks inside its own part, so
-that part lands plain. The shape is read every frame, which also keeps it working where
-`CSS.registerProperty` is missing: there an animation of a custom property is applied in steps
-instead of interpolating.
+The general `--navigation-indicator-deform-stiffness` and `--navigation-indicator-deform-damping`
+set how hard both springs follow; `--navigation-indicator-{lead,trail}-stiffness` and
+`-damping` override them for one end. A larger stiffness makes an end answer sooner, a larger
+damping makes it settle without overshooting.
+
+A feature is shaped from a deformation with `calc()`. The shape is read every frame, which also
+keeps it working where `CSS.registerProperty` is missing: there an animation of a custom
+property is applied in steps instead of interpolating.
 
 ```css
 ax-navigation {
@@ -147,19 +151,17 @@ ax-navigation {
   --ax-edge-right-span: 100%;
   --ax-edge-left-kind: triangle;
   --ax-edge-left-span: 100%;
-  /* A curve of the shape, not of the movement. The point spans its whole part; the
-     notch is over after 60% of the tail, which is where the tail stops moving and
-     only creeps for the rest of the movement. A plain triangle is
-     min(lead, 1 - lead) * 18px instead. */
-  --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
-  --trail: max(0, min(var(--navigation-indicator-trail, 0) * 5, 1, (0.6 - var(--navigation-indicator-trail, 0)) * 5));
-  --ax-edge-right-depth: calc(var(--lead) * 9px);
-  --ax-edge-left-depth: calc(var(--trail) * -7px);
+  --navigation-indicator-deform-stiffness: 400;
+  --navigation-indicator-deform-damping: 32;
+  --navigation-indicator-trail-stiffness: 900;
+  --navigation-indicator-trail-damping: 46;
+  --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+  --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
 }
 
 ax-navigation[moving="backward"] {
-  --ax-edge-right-depth: calc(var(--trail) * -7px);
-  --ax-edge-left-depth: calc(var(--lead) * 9px);
+  --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+  --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
 }
 ```
 

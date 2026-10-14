@@ -82,16 +82,17 @@
       --ax-edge-right-span: 100%;
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
-      /* The point spans its whole part; the notch is over after 60% of the tail, which is where
-         the tail stops moving and only creeps. */
-      --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
-      --trail: max(0, min(var(--navigation-indicator-trail, 0) * 5, 1, (0.6 - var(--navigation-indicator-trail, 0)) * 5));
-      --ax-edge-right-depth: calc(var(--lead) * 9px);
-      --ax-edge-left-depth: calc(var(--trail) * -7px);
+      /* How hard each end chases its own travel: the tail is quick, the head settles. */
+      --navigation-indicator-deform-stiffness: 400;
+      --navigation-indicator-deform-damping: 32;
+      --navigation-indicator-trail-stiffness: 900;
+      --navigation-indicator-trail-damping: 46;
+      --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+      --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
     }
     .shape-animated[moving="backward"] {
-      --ax-edge-right-depth: calc(var(--trail) * -7px);
-      --ax-edge-left-depth: calc(var(--lead) * 9px);
+      --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+      --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
     }
     .shape-lean {
       --ax-corner-top-left-shift-x: 10px;
@@ -399,7 +400,7 @@
       </div>
       <div class="code">
         <h2>Animated Indicator</h2>
-        <p>The element carries <code>moving</code>, forward or backward, while the indicator runs, and how far each end of the movement is. A feature is shaped over that with <code>calc()</code>, so it gets its own curve and is gone when its end arrives.</p>
+        <p>The element drives the deformation of each end with a spring of its own, over that end's travel, and writes it as <code>--navigation-indicator-lead</code> and <code>--navigation-indicator-trail</code>. How hard those springs follow is set with <code>--navigation-indicator-deform-stiffness</code> and <code>--navigation-indicator-deform-damping</code>, or per end.</p>
         <pre>ax-navigation {
   --navigation-indicator-speed: 900ms;
   --navigation-indicator-width: 14px;
@@ -407,18 +408,18 @@
   --ax-edge-right-span: 100%;
   --ax-edge-left-kind: triangle;
   --ax-edge-left-span: 100%;
-  /* A curve of the shape, not of the movement. The point spans its whole part;
-     the notch is over after 60% of the tail, which is where the tail stops
-     moving and only creeps for the rest of the movement. */
-  --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
-  --trail: max(0, min(var(--navigation-indicator-trail, 0) * 5, 1, (0.6 - var(--navigation-indicator-trail, 0)) * 5));
-  --ax-edge-right-depth: calc(var(--lead) * 9px);
-  --ax-edge-left-depth: calc(var(--trail) * -7px);
+  /* How hard each end follows: the tail is quick, the head settles. */
+  --navigation-indicator-deform-stiffness: 400;
+  --navigation-indicator-deform-damping: 32;
+  --navigation-indicator-trail-stiffness: 900;
+  --navigation-indicator-trail-damping: 46;
+  --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+  --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
 }
 
 ax-navigation[moving="backward"] {
-  --ax-edge-right-depth: calc(var(--trail) * -7px);
-  --ax-edge-left-depth: calc(var(--lead) * 9px);
+  --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+  --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
 }</pre>
       </div>
     </section>
