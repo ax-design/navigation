@@ -125,29 +125,27 @@ over the items.
 While the indicator is moving from one item to another the element carries the `moving`
 attribute, with `forward` or `backward` as its value: forward is toward the end of the item
 order, which is right in a horizontal navigation and down in a vertical one. The attribute goes
-away when the indicator arrives, and stays on while a movement is retargeted, so a transition
-written for it does not restart in the middle of one.
+away when the indicator arrives, and an interrupted movement starts it over.
 
-The shape properties are registered, so they transition, and the canvas follows them while they
-change, so a feature a style animates is drawn while it moves.
+A movement lasts `--navigation-indicator-speed`, so a transition on a shape property that starts
+when the mark appears ends after the indicator has landed. An animation of that length runs with
+the movement instead and can bring the shape back before it lands. The canvas reads the shape
+properties while they change, so it draws either of them.
 
 ```css
 ax-navigation {
   --ax-edge-right-kind: triangle;
   --ax-edge-right-span: 100%;
-  --ax-edge-left-kind: triangle;
-  --ax-edge-left-span: 100%;
-  transition: --ax-edge-right-depth 200ms, --ax-edge-left-depth 200ms;
 }
 
 ax-navigation[moving="forward"] {
-  --ax-edge-right-depth: 9px;
-  --ax-edge-left-depth: -7px;
+  animation: sharpen var(--navigation-indicator-speed) linear;
 }
 
-ax-navigation[moving="backward"] {
-  --ax-edge-left-depth: 9px;
-  --ax-edge-right-depth: -7px;
+@keyframes sharpen {
+  0% { --ax-edge-right-depth: 0px; }
+  45% { --ax-edge-right-depth: 9px; }
+  100% { --ax-edge-right-depth: 0px; }
 }
 ```
 
