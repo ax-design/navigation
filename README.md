@@ -127,12 +127,18 @@ attribute, with `forward` or `backward` as its value: forward is toward the end 
 order, which is right in a horizontal navigation and down in a vertical one. The attribute goes
 away when the indicator arrives, and an interrupted movement starts it over.
 
-A movement is two parts, and the element writes how long each takes:
-`--navigation-indicator-arrival` is the time the leading end takes to reach the item and
-`--navigation-indicator-follow` the time the trailing end takes to follow it. An animation can be
-given the length of the part whose end carries its feature, so that feature grows and shrinks
-inside that part and the end lands plain. A transition cannot do it: it starts when the mark
-appears and therefore ends after the indicator has landed.
+The element also writes what each end of a movement is doing:
+
+* `--navigation-indicator-arrival` and `--navigation-indicator-follow` are the times the leading
+  end takes to reach the item and the trailing end takes to follow it.
+* `--navigation-indicator-lead` and `--navigation-indicator-trail` are how far those ends are
+  deformed while they travel: each is 1 half way through the travel of its end, and 0 while it
+  stands and when it has arrived.
+
+A feature shaped from a count with `calc()` grows and shrinks inside the travel of its own end,
+so that end lands plain. The shape is read every frame, which also keeps it working where
+`CSS.registerProperty` is missing: there an animation of a custom property is applied in steps
+instead of interpolating.
 
 ```css
 ax-navigation {
@@ -140,16 +146,14 @@ ax-navigation {
   --ax-edge-right-span: 100%;
   --ax-edge-left-kind: triangle;
   --ax-edge-left-span: 100%;
+  --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+  --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
 }
 
-ax-navigation[moving="forward"] {
-  animation:
-    point var(--navigation-indicator-arrival) linear,
-    notch var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
+ax-navigation[moving="backward"] {
+  --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+  --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
 }
-
-@keyframes point { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: 9px; } 100% { --ax-edge-right-depth: 0px; } }
-@keyframes notch { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: -7px; } 100% { --ax-edge-left-depth: 0px; } }
 ```
 
 ## Events
