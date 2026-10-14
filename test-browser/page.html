@@ -13,9 +13,12 @@
     .animated-shape {
       --ax-edge-right-kind: triangle;
       --ax-edge-right-span: 100%;
-      transition: --ax-edge-right-depth 200ms ease-out;
+      --ax-edge-left-kind: triangle;
+      --ax-edge-left-span: 100%;
+      transition: --ax-edge-right-depth 200ms ease-out, --ax-edge-left-depth 200ms ease-out;
     }
-    .animated-shape[moving] { --ax-edge-right-depth: 9px; }
+    .animated-shape[moving="forward"] { --ax-edge-right-depth: 9px; --ax-edge-left-depth: -7px; }
+    .animated-shape[moving="backward"] { --ax-edge-left-depth: 9px; --ax-edge-right-depth: -7px; }
   </style>
 </head>
 <body>

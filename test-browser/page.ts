@@ -186,8 +186,9 @@ async function run() {
         'strip right ' + vBox.right.toFixed(1) + ' of ' + vprobe.canvas.getBoundingClientRect().width.toFixed(1)
     );
 
-    // The element marks itself while the indicator runs, and a style can follow the mark: an
-    // end feature that transitions on it grows out and is gone again once the bar arrives.
+    // The element carries the direction while the indicator runs, and a style can follow it: an
+    // end feature that transitions on the mark grows out on the leading end and is gone again
+    // once the bar has arrived.
     const anim = document.createElement(AxNavigation.ElementName) as AxNavigation;
     anim.className = 'animated-shape';
     anim.innerHTML = '<ax-navigation-item>One</ax-navigation-item><ax-navigation-item>Two</ax-navigation-item><ax-navigation-item>Three</ax-navigation-item>';
@@ -195,28 +196,57 @@ async function run() {
     await frames(8);
     const animFrom = anim.querySelector(AxNavigationItem.ElementName) as AxNavigationItem;
     const animTo = anim.querySelectorAll(AxNavigationItem.ElementName)[1] as AxNavigationItem;
+    const animBox = anim.canvas.getBoundingClientRect();
     check('a settled indicator does not carry the moving mark', !anim.hasAttribute('moving'));
+
     animTo.click();
-    check('the indicator carries the moving mark while it runs', anim.hasAttribute('moving'));
+    check('the indicator carries the direction while it runs', anim.getAttribute('moving') === 'forward', 'moving=' + anim.getAttribute('moving'));
     await frames(20);
     const midFlight = painted(anim);
-    const animBox = anim.canvas.getBoundingClientRect();
     const targetRight = animTo.getBoundingClientRect().right - animBox.left;
     check(
-        'an end feature that transitions on the mark grows while the indicator moves',
+        'the end feature grows on the leading end while it moves forward',
         midFlight.right > targetRight + 4,
         'painted right ' + midFlight.right.toFixed(1) + ', item right ' + targetRight.toFixed(1)
     );
-    await frames(90);
+
+    // The features have to come back frame by frame, not in one jump when the movement ends.
+    let shrinking = false;
+    for (let i = 0; i < 60 && !shrinking; i++) {
+        await frames(1);
+        if (anim.hasAttribute('moving')) continue;
+        const now = painted(anim);
+        shrinking = now.right > targetRight + 1.5 && now.right < targetRight + 7.5;
+    }
+    check('the end feature shrinks back frame by frame', shrinking);
+    await frames(60);
     check('the moving mark is gone once the indicator has arrived', !anim.hasAttribute('moving'));
     const landed = painted(anim);
     check(
-        'the end feature shrinks back after the indicator arrives',
+        'the end feature is gone once the indicator has arrived',
         Math.abs(landed.right - targetRight) < 3,
         'painted right ' + landed.right.toFixed(1) + ', item right ' + targetRight.toFixed(1)
     );
-    check('the same item is current after the move', anim.currentItem === animTo, 'current ' + (anim.currentItem === animTo ? 'Two' : 'other'));
-    check('the start item is still the first one', !!animFrom);
+
+    animFrom.click();
+    check('the direction is reported on the way back', anim.getAttribute('moving') === 'backward', 'moving=' + anim.getAttribute('moving'));
+    await frames(20);
+    const backFlight = painted(anim);
+    const fromLeft = animFrom.getBoundingClientRect().left - animBox.left;
+    check(
+        'the end feature grows on the leading end while it moves back',
+        backFlight.left < fromLeft - 4,
+        'painted left ' + backFlight.left.toFixed(1) + ', item left ' + fromLeft.toFixed(1)
+    );
+    await frames(120);
+    const backLanded = painted(anim);
+    check(
+        'it settles on the item it moved back to',
+        Math.abs(backLanded.left - fromLeft) < 3 && !anim.hasAttribute('moving'),
+        'painted left ' + backLanded.left.toFixed(1) + ', item left ' + fromLeft.toFixed(1) + ', moving ' + anim.hasAttribute('moving')
+    );
+    check('the same item is current after the moves', anim.currentItem === animFrom, 'current ' + (anim.currentItem === animFrom ? 'One' : 'other'));
+    check('the second item is still there', !!animTo);
 
     return { userAgent: navigator.userAgent, checks };
 }
