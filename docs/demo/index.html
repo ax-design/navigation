@@ -31,7 +31,7 @@
       --navigation-indicator-speed: 2000ms;
     }
 
-    .shape-pill {
+    .shape-radius {
       --navigation-indicator-width: 14px;
       --ax-radius: 7px;
     }
@@ -74,6 +74,23 @@
       --ax-edge-right-kind: triangle;
       --ax-edge-right-depth: 8px;
       --ax-edge-right-span: 100%;
+    }
+    .shape-animated {
+      --navigation-indicator-speed: 900ms;
+      --navigation-indicator-width: 14px;
+      --ax-edge-right-kind: triangle;
+      --ax-edge-right-span: 100%;
+      --ax-edge-left-kind: triangle;
+      --ax-edge-left-span: 100%;
+      transition: --ax-edge-right-depth 200ms, --ax-edge-left-depth 200ms;
+    }
+    .shape-animated[moving] {
+      --ax-edge-right-depth: 9px;
+      --ax-edge-left-depth: -7px;
+    }
+    .shape-lean {
+      --ax-corner-top-left-shift-x: 10px;
+      --ax-corner-bottom-right-shift-x: 10px;
     }
   </style>
 </head>
@@ -209,25 +226,23 @@
     </section>
 
     <h1>Shapes</h1>
-    <p>The indicator is a shape of <code>@ax-design/surface</code>, so it takes that contract:
-      corners move and change shape, and every side carries one feature. A navigation without any
-      of these properties shows the plain rectangle it always did. The bar is
-      <code>--navigation-indicator-width</code> across and the width of the current item along, and
-      the same frame is used in both directions, so <code>top</code> and <code>bottom</code> are the two
-      long sides (<code>top</code> facing the content) and <code>right</code> and <code>left</code> are the
-      end it moves toward and the end it starts from.</p>
+    <p>The indicator is a shape of <code>@ax-design/surface</code> and takes its properties. The shape is
+      drawn into the bar the current item occupies: <code>--navigation-indicator-width</code> across the
+      bar, the width of the item along it. Without any of these properties the indicator is a plain
+      rectangle. In the names below, <code>{corner}</code> is one of <code>top-left</code>,
+      <code>top-right</code>, <code>bottom-right</code>, <code>bottom-left</code> and <code>{side}</code>
+      is one of <code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code>.</p>
 
     <section class="demo-block">
       <div class="demo">
-        <ax-navigation class="shape-pill">
+        <ax-navigation class="shape-radius">
           <ax-navigation-item>Home</ax-navigation-item>
           <ax-navigation-item>Apps</ax-navigation-item>
           <ax-navigation-item>Games</ax-navigation-item>
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>Pill</h2>
-        <p>A radius of half the thickness rounds both ends of the bar.</p>
+        <h2>Indicator Radius</h2>
         <pre>ax-navigation {
   --navigation-indicator-width: 14px;
   --ax-radius: 7px;
@@ -244,8 +259,7 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>Cut corners</h2>
-        <p>The corner shape of surface applies to the indicator: round, bevel, scoop or notch.</p>
+        <h2>Cut Corners</h2>
         <pre>ax-navigation {
   --navigation-indicator-width: 14px;
   --ax-radius: 6px;
@@ -263,8 +277,7 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>Scooped corners</h2>
-        <p>A scoop bends the corner inward, so the bar gains a waist at both ends.</p>
+        <h2>Scooped Corners</h2>
         <pre>ax-navigation {
   --navigation-indicator-width: 14px;
   --ax-radius: 5px;
@@ -282,8 +295,7 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>Notched corners</h2>
-        <p>A notch cuts the corner out of the bar.</p>
+        <h2>Notched Corners</h2>
         <pre>ax-navigation {
   --navigation-indicator-width: 16px;
   --ax-radius: 6px;
@@ -301,8 +313,8 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>Parallelogram</h2>
-        <p>Moving two opposite corners on x leans the bar. The same declaration leans a vertical navigation too.</p>
+        <h2>Leaning Indicator</h2>
+        <p>Moves the top left and the bottom right corner into the shape.</p>
         <pre>ax-navigation {
   --navigation-indicator-width: 14px;
   --ax-corner-top-left-shift-x: 10px;
@@ -320,8 +332,7 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>A bump along the bar</h2>
-        <p>An edge feature sits on one of the four sides. bottom is the long side away from the content.</p>
+        <h2>Indicator Bump</h2>
         <pre>ax-navigation {
   --navigation-indicator-width: 12px;
   --ax-radius: 6px;
@@ -341,8 +352,8 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>A bite into the bar</h2>
-        <p>A negative depth puts the arc into the bar instead of out of it.</p>
+        <h2>Indicator Notch</h2>
+        <p>A negative depth puts the feature into the indicator.</p>
         <pre>ax-navigation {
   --navigation-indicator-width: 18px;
   --ax-radius: 9px;
@@ -362,13 +373,41 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>A pointed end</h2>
-        <p>right is the end the indicator moves toward, left the one it starts from. Their sides are the thickness of the bar, so a feature that spans all of it caps the end.</p>
+        <h2>Pointed Indicator</h2>
+        <p>The right side is the end the indicator moves toward.</p>
         <pre>ax-navigation {
   --navigation-indicator-width: 14px;
   --ax-edge-right-kind: triangle;
   --ax-edge-right-depth: 8px;
   --ax-edge-right-span: 100%;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-animated">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>Animated Indicator</h2>
+        <p>The element carries <code>moving</code> while the indicator runs, and the end features transition on it.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-speed: 900ms;
+  --navigation-indicator-width: 14px;
+  --ax-edge-right-kind: triangle;
+  --ax-edge-right-span: 100%;
+  --ax-edge-left-kind: triangle;
+  --ax-edge-left-span: 100%;
+  transition: --ax-edge-right-depth 200ms, --ax-edge-left-depth 200ms;
+}
+
+ax-navigation[moving] {
+  --ax-edge-right-depth: 9px;
+  --ax-edge-left-depth: -7px;
 }</pre>
       </div>
     </section>
@@ -388,15 +427,15 @@
         </ax-navigation>
       </div>
       <div class="code">
-        <h2>The same shape, both directions</h2>
-        <p>The declaration written for the horizontal bar leans the vertical one the same way.
-          Nothing is written twice and no direction-dependent property name appears.</p>
+        <h2>Horizontal and Vertical</h2>
+        <p>The same declaration on both.</p>
         <pre>ax-navigation {
   --ax-corner-top-left-shift-x: 10px;
   --ax-corner-bottom-right-shift-x: 10px;
 }</pre>
       </div>
     </section>
+
     <script src="../../build/main.js"></script>
     <script>AxNavigation.register()</script>
     <script type="module">
