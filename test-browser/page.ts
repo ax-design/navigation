@@ -216,33 +216,21 @@ async function run() {
         'arrival ' + arrival + ', follow ' + follow
     );
 
-    // The point grows and is gone again inside the leading end's own travel. It rides the head,
-    // which is still on its way, so it never reaches past the target's far edge.
+    // The point grows over the leading end's travel and settles again after it, with the spring
+    // the element drives. It rides the head, which is still on its way, so it never reaches past
+    // the target's far edge.
     const twoRight = animTwo.getBoundingClientRect().right - animBox.left;
     let pointOut = 0;
     let leadPeak = 0;
-    let pointClearAtArrival = true;
-    const started = performance.now();
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 24; i++) {
         await frames(1);
-        const t = performance.now() - started;
         const depth = computedNumber('--ax-edge-right-depth');
         const lead = computedNumber('--navigation-indicator-lead');
+        if (depth > pointOut) pointOut = depth;
         if (lead > leadPeak) leadPeak = lead;
-        if (t < arrival - 25) {
-            if (depth > pointOut) pointOut = depth;
-        } else if (t >= arrival) {
-            pointClearAtArrival = depth < 0.5 && painted(anim).right <= twoRight + 2.5;
-            break;
-        }
     }
     check('the point is out while the leading end travels', pointOut > 4, 'longest ' + pointOut.toFixed(1) + 'px');
-    check('each part of the movement publishes how far it is', leadPeak > 0.6, 'reached ' + leadPeak.toFixed(2));
-    check(
-        'the point is gone when the leading end lands',
-        pointClearAtArrival,
-        'painted right ' + painted(anim).right.toFixed(1) + ', item right ' + twoRight.toFixed(1)
-    );
+    check('the element drives the deformation of an end', leadPeak > 0.6, 'reached ' + leadPeak.toFixed(2));
 
     // The notch belongs to the trailing end, and the bar is plain once it has arrived.
     let backAtLanding = false;
@@ -252,8 +240,15 @@ async function run() {
         backAtLanding = painted(anim).right <= twoRight + 3;
     }
     check('the bar is plain when it lands', backAtLanding);
+    const leadAtLanding = computedNumber('--navigation-indicator-lead');
+    const trailAtLanding = computedNumber('--navigation-indicator-trail');
     check(
-        'the progress of each part is zero while the bar stands',
+        'the deformation of each end is released by the time the bar lands',
+        Math.abs(leadAtLanding) < 0.5 && Math.abs(trailAtLanding) < 0.5,
+        'lead ' + leadAtLanding.toFixed(2) + ', trail ' + trailAtLanding.toFixed(2)
+    );
+    check(
+        'the deformation rests at zero while the bar stands',
         computedNumber('--navigation-indicator-lead') === 0 && computedNumber('--navigation-indicator-trail') === 0,
         'lead ' + computedNumber('--navigation-indicator-lead') + ', trail ' + computedNumber('--navigation-indicator-trail')
     );

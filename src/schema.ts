@@ -1,6 +1,17 @@
 import type { PropertySpec } from '@ax-design/typed-om';
 import { SHAPE } from '@ax-design/surface/schema';
 
+// The deformation of each end is a damped follower: it chases how much of that end's travel is
+// left, with its own stiffness and damping. The general pair applies to both ends; an end uses
+// its own value unless it is -1, which means "use the general one".
+const deform = (name: string, initial: string): PropertySpec => ({
+    name,
+    syntax: { type: 'number' },
+    initial,
+    inherits: true,
+    register: true,
+});
+
 // The shape of the indicator is the Axiom surface contract: --ax-radius, --ax-corner-* and
 // --ax-edge-{top,right,bottom,left}-*. The general properties (--ax-edge-span and friends) are
 // not read here; they are registered from SHAPE.shared and reach every side through
@@ -21,6 +32,12 @@ export const NAVIGATION_PROPERTIES: PropertySpec[] = [
         inherits: true,
         register: true,
     },
+    deform('--navigation-indicator-deform-stiffness', '400'),
+    deform('--navigation-indicator-deform-damping', '32'),
+    deform('--navigation-indicator-lead-stiffness', '-1'),
+    deform('--navigation-indicator-lead-damping', '-1'),
+    deform('--navigation-indicator-trail-stiffness', '-1'),
+    deform('--navigation-indicator-trail-damping', '-1'),
 ];
 
 // Written by the component, never authored, and left unregistered on purpose: an unregistered
@@ -58,10 +75,10 @@ export const WINDOW_PROPERTIES = [
         initialValue: '0ms',
         inherits: true,
     },
-    // How far each end is deformed while it travels: 0 while it stands, 1 at the middle of its
-    // travel, 0 when it arrives. Numbers rather than an animation, because a feature shaped from
-    // them with calc() is drawn by the browser in every engine: an animation of a custom property
-    // is applied in steps unless CSS.registerProperty registered it.
+    // The deformation of each end, written while it is in flight and while it settles. Numbers
+    // rather than an animation, because a feature shaped from them with calc() is drawn by the
+    // browser in every engine: an animation of a custom property is applied in steps unless
+    // CSS.registerProperty registered it.
     {
         name: LEAD_PROPERTY,
         syntax: '<number>',

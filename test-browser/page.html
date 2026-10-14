@@ -17,15 +17,12 @@
       --ax-edge-right-span: 100%;
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
-      /* Full depth over the middle of each end; the notch is over early, where the tail stops. */
-      --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
-      --trail: max(0, min(var(--navigation-indicator-trail, 0) * 5, 1, (0.6 - var(--navigation-indicator-trail, 0)) * 5));
-      --ax-edge-right-depth: calc(var(--lead) * 9px);
-      --ax-edge-left-depth: calc(var(--trail) * -7px);
+      --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+      --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
     }
     .animated-shape[moving="backward"] {
-      --ax-edge-right-depth: calc(var(--trail) * -7px);
-      --ax-edge-left-depth: calc(var(--lead) * 9px);
+      --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+      --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
     }
   </style>
 </head>

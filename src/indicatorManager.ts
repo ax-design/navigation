@@ -23,10 +23,21 @@ const animationBreakPoint = 0.3;
 // the first change is seen. The numbers are compared instead of listening for transition events,
 // which engines do not report the same way for custom properties.
 const SHAPE_FOLLOW_LIMIT = 5000;
+// An end is asked for its deformation while it still has this much of its travel to do; when its
+// travel is practically over the spring is released.
+const DEFORM_TRAVEL = 0.85;
 
 const navigationSchema = new StyleSchema(NAVIGATION_PROPERTIES);
 
 type Moving = 'forward' | 'backward';
+
+// One end's deformation and the spring that drives it.
+interface Deform {
+    value: number;
+    velocity: number;
+    stiffness: number;
+    damping: number;
+}
 
 interface IndicatorStyle {
     speed: number;
@@ -83,6 +94,10 @@ class IndicatorManager {
     private followUntil: number;
     // The shape numbers of the last paint, to tell whether a style is still changing them.
     private shapeKey: string;
+    private readonly lead: Deform;
+    private readonly trail: Deform;
+    private deformHandle: number | null;
+    private lastStep: number;
     // The part of the bar drawn when the previous transition was interrupted, in canvas
     // coordinates, so the next one continues from where the drawn one ended.
     private fromRect: Rect | null;
@@ -101,6 +116,10 @@ class IndicatorManager {
         this.followHandle = null;
         this.followUntil = 0;
         this.shapeKey = '';
+        this.lead = { value: 0, velocity: 0, stiffness: 400, damping: 32 };
+        this.trail = { value: 0, velocity: 0, stiffness: 400, damping: 32 };
+        this.deformHandle = null;
+        this.lastStep = 0;
         this.fromRect = null;
         this.lastRect = null;
         this.$from = $container.currentItem;
@@ -132,8 +151,9 @@ class IndicatorManager {
         this.lastRect = null;
         this.$from = this.$container.currentItem;
         this.$to = undefined;
+        this.stopDeform();
         this.markMoving(null);
-        this.clearRamps();
+        this.resetDeform();
     }
 
     // Paints the bar of the current item, coalesced to one frame. Skipped while a movement owns
@@ -193,8 +213,9 @@ class IndicatorManager {
         this.$to = undefined;
         this.cancelRest();
         this.stopFollow();
+        this.stopDeform();
         this.markMoving(null);
-        this.clearRamps();
+        this.resetDeform();
         this.requestRest();
     }
 
@@ -208,6 +229,7 @@ class IndicatorManager {
         this.$to = $to;
         // Nothing to move from: the indicator is simply drawn where it belongs. The style is read
         // first, so the times a movement is animated on are written before the mark appears.
+        this.lastStep = 0;
         if ($from) {
             if (!this.style) this.styleNow();
             this.markMoving(this.isForward($from, $to) ? 'forward' : 'backward', interrupting);
@@ -232,6 +254,11 @@ class IndicatorManager {
         // The two parts of a movement, as times a style can animate on.
         this.setTime(ARRIVAL_PROPERTY, speed * animationBreakPoint);
         this.setTime(FOLLOW_PROPERTY, speed * (1 - animationBreakPoint));
+        // How hard each end's deformation follows its own travel.
+        const stiffness = this.readNumber('--navigation-indicator-deform-stiffness', 400);
+        const damping = this.readNumber('--navigation-indicator-deform-damping', 32);
+        this.readDeformParameters(this.lead, 'lead', stiffness, damping);
+        this.readDeformParameters(this.trail, 'trail', stiffness, damping);
         // Outward features stick out of the bar: the canvas box and the space the layout keeps
         // free have to cover them. The overhang does not depend on how long the bar is, so one
         // measurement at the container's own length is enough.
@@ -269,18 +296,86 @@ class IndicatorManager {
         this.$container.style.setProperty(name, text);
     }
 
-    // How far one part of a movement is, from 0 at its start to 1 at its end. A plain ramp, not
-    // the eased travel of the bar: a style gives a feature its own curve over it, so the shape
-    // does not inherit the easing of the movement.
-    private setRamp(name: string, value: number): void {
-        const clamped = value < 0 ? 0 : value > 1 ? 1 : value;
-        const text = String(Math.round(clamped * 1000) / 1000);
+    // One end's deformation, written for a style to shape a feature with. It is the response of
+    // a spring, not a curve of the movement.
+    private setDeform(name: string, value: number): void {
+        const text = String(Math.round(value * 1000) / 1000);
         if (this.$container.style.getPropertyValue(name) !== text) this.$container.style.setProperty(name, text);
     }
 
-    private clearRamps(): void {
-        this.setRamp(LEAD_PROPERTY, 0);
-        this.setRamp(TRAIL_PROPERTY, 0);
+    private writeDeform(): void {
+        this.setDeform(LEAD_PROPERTY, this.lead.value);
+        this.setDeform(TRAIL_PROPERTY, this.trail.value);
+    }
+
+    private resetDeform(): void {
+        this.lead.value = 0;
+        this.lead.velocity = 0;
+        this.trail.value = 0;
+        this.trail.velocity = 0;
+        this.writeDeform();
+    }
+
+    // Seconds since the last step, capped so a stalled frame cannot throw the springs off.
+    private stepTime(time: number): number {
+        const dt = this.lastStep > 0 ? Math.min(0.05, (time - this.lastStep) / 1000) : 1 / 60;
+        this.lastStep = time;
+        return dt > 0 ? dt : 1 / 60;
+    }
+
+    // One step of a damped follower toward its target. Substepped so a stiff spring stays stable.
+    private stepDeform(deform: Deform, target: number, dt: number): void {
+        const steps = Math.max(1, Math.min(8, Math.ceil(dt * 240)));
+        const h = dt / steps;
+        for (let i = 0; i < steps; i++) {
+            const a = deform.stiffness * (target - deform.value) - deform.damping * deform.velocity;
+            deform.velocity += a * h;
+            deform.value += deform.velocity * h;
+        }
+    }
+
+    private deformActive(): boolean {
+        return (
+            Math.abs(this.lead.value) > 0.01 ||
+            Math.abs(this.lead.velocity) > 0.05 ||
+            Math.abs(this.trail.value) > 0.01 ||
+            Math.abs(this.trail.velocity) > 0.05
+        );
+    }
+
+    // A movement ends with the springs still settling, so they keep running on their own until
+    // they are back at rest.
+    private continueDeform(): void {
+        if (this.deformHandle !== null || this.animationStartTime !== null) return;
+        if (!this.deformActive()) {
+            // Settled: leave the numbers exactly at rest instead of at the last small value.
+            this.resetDeform();
+            return;
+        }
+        this.deformHandle = window.requestAnimationFrame((time) => {
+            this.deformHandle = null;
+            if (this.animationStartTime !== null) return;
+            const dt = this.stepTime(time);
+            this.stepDeform(this.lead, 0, dt);
+            this.stepDeform(this.trail, 0, dt);
+            this.writeDeform();
+            this.paintRest();
+            this.continueDeform();
+        });
+    }
+
+    private stopDeform(): void {
+        if (this.deformHandle !== null) window.cancelAnimationFrame(this.deformHandle);
+        this.deformHandle = null;
+    }
+
+    // The stiffness and damping of one end: its own value unless it is the -1 sentinel, which
+    // means "use the general one".
+    private readDeformParameters(deform: Deform, part: string, stiffness: number, damping: number): void {
+        const ownStiffness = this.readNumber('--navigation-indicator-' + part + '-stiffness', -1);
+        const ownDamping = this.readNumber('--navigation-indicator-' + part + '-damping', -1);
+        deform.stiffness = Math.max(0, ownStiffness < 0 ? stiffness : ownStiffness);
+        deform.damping = Math.max(0, ownDamping < 0 ? damping : ownDamping);
     }
 
     private styleNow(): IndicatorStyle {
@@ -341,7 +436,7 @@ class IndicatorManager {
         this.frameHandle = null;
         if (!this.$from || !this.$to) {
             this.markMoving(null);
-            this.clearRamps();
+            this.resetDeform();
             return;
         }
         if (this.animationStartTime === null) this.animationStartTime = time;
@@ -349,11 +444,13 @@ class IndicatorManager {
         const progress = (time - this.animationStartTime) / style.speed;
         const grow = progress < animationBreakPoint ? growAnimationFn(progress / animationBreakPoint) : 1;
         const cut = progress > animationBreakPoint ? cutAnimationFn((progress - animationBreakPoint) / (1 - animationBreakPoint)) : 0;
-        // How far each part of the movement is, as plain ramps: the leading end runs from 0 at the
-        // start to 1 when it arrives, and the trailing end from 0 then to 1 when the bar lands.
-        // They are written before the shape is read, so a frame draws the shape of that frame.
-        this.setRamp(LEAD_PROPERTY, progress / animationBreakPoint);
-        this.setRamp(TRAIL_PROPERTY, (progress - animationBreakPoint) / (1 - animationBreakPoint));
+        // Each end's deformation is asked for while that end is still moving, and released when
+        // its travel is practically done, with its own spring in between. Written before the shape
+        // is read, so a frame draws the deformation of that frame.
+        const dt = this.stepTime(time);
+        this.stepDeform(this.lead, grow < DEFORM_TRAVEL ? 1 : 0, dt);
+        this.stepDeform(this.trail, progress >= animationBreakPoint && cut < DEFORM_TRAVEL ? 1 : 0, dt);
+        this.writeDeform();
         // The shape numbers are read again on every frame, because a style can shape them.
         this.values.values = this.binding.read();
         const thickness = Math.max(0, this.readNumber('--navigation-indicator-width', style.thickness));
@@ -388,9 +485,9 @@ class IndicatorManager {
         this.$from = undefined;
         this.$to = undefined;
         this.markMoving(null);
-        // Both parts are over: a style that shaped a feature over them is drawn plain again.
-        this.clearRamps();
         this.refreshRest();
+        // The springs are still settling: they run on until they are back at rest.
+        this.continueDeform();
     }
 
     // The bar the movement starts from: either the part drawn by the interrupted movement or the
