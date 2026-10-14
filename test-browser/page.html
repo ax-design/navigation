@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>navigation browser test</title>
+  <style>
+    body { margin: 0; padding: 40px; }
+    ax-navigation { margin-bottom: 30px; }
+    .custom-color { --navigation-indicator-color: red; }
+    .custom-width { --navigation-indicator-width: 6px; }
+    .custom-speed { --navigation-indicator-speed: 100ms; }
+  </style>
+</head>
+<body>
+  <ax-navigation id="nav1">
+    <ax-navigation-item id="item1">Home</ax-navigation-item>
+    <ax-navigation-item id="item2">Apps</ax-navigation-item>
+    <ax-navigation-item id="item3">Games</ax-navigation-item>
+  </ax-navigation>
+
+  <ax-navigation id="nav-vertical" vertical class="custom-color custom-width custom-speed">
+    <ax-navigation-item id="vitem1" default>First</ax-navigation-item>
+    <ax-navigation-item id="vitem2">Second</ax-navigation-item>
+  </ax-navigation>
+
+  <script type="module" src="./page.ts"></script>
+</body>
+</html>

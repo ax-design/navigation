@@ -1,18 +1,49 @@
 import BezierEasing from 'bezier-easing';
-import { AxNavigation, AxNavigationItem } from './CustomElements';
+import { AxNavigation, AxNavigationItem } from './CustomElements.js';
+import { StyleBinding, StyleSchema } from '@ax-design/typed-om';
+import type { PropertyValue } from '@ax-design/typed-om';
+import { NAVIGATION_PROPERTIES } from './schema.js';
 
 const growAnimationFn = BezierEasing(0.7, 0, 1, 0.5);
 const cutAnimationFn = BezierEasing(0.1, 0.9, 0.2, 1);
 const animationBreakPoint = 0.3;
 
 interface IndicatorStyle {
-  speed: number,
-  color: string,
-  width: number
+  speed: number;
+  color: string;
+  width: number;
+}
+
+const navigationSchema = new StyleSchema(NAVIGATION_PROPERTIES);
+
+function toCssColor(value: PropertyValue): string {
+  if (Array.isArray(value)) {
+    return `rgba(${value[0]}, ${value[1]}, ${value[2]}, ${value[3]})`;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  return 'rgb(0, 0, 0)';
+}
+
+function parseSpeed(element: Element, fallback = 600): number {
+  const text = getComputedStyle(element).getPropertyValue('--navigation-indicator-speed').trim();
+  if (!text) return fallback;
+  if (text.endsWith('ms')) {
+    const val = parseFloat(text);
+    return isNaN(val) ? fallback : val;
+  }
+  if (text.endsWith('s')) {
+    const val = parseFloat(text);
+    return isNaN(val) ? fallback : val * 1000;
+  }
+  const val = parseFloat(text);
+  return isNaN(val) ? fallback : val;
 }
 
 class IndicatorManager {
   private readonly $container: AxNavigation;
+  private readonly binding: StyleBinding;
   private animationStartTime: number | null;
   private forceStopAnimation: boolean;
   private $from?: AxNavigationItem;
@@ -23,22 +54,28 @@ class IndicatorManager {
     this.animationStartTime = null;
     this.forceStopAnimation = false;
     this.$from = $defaultHighlight;
+    this.binding = new StyleBinding(navigationSchema, $container, $container.root);
   }
+
   private getIndicatorStyle(): IndicatorStyle {
-    const computedStyle = this.$container.computedStyleMap();
+    this.binding.read();
+    const widthVal = this.binding.get('--navigation-indicator-width');
+    const colorVal = this.binding.get('--navigation-indicator-color');
 
     return {
-      speed: computedStyle.get('--navigation-indicator-speed').value as number * 1000,
-      color: computedStyle.get('--navigation-indicator-color').toString() as string,
-      width: computedStyle.get('--navigation-indicator-width').value as number
-    }
+      speed: parseSpeed(this.$container),
+      color: toCssColor(colorVal),
+      width: typeof widthVal === 'number' ? widthVal : 2,
+    };
   }
+
   switch($from: AxNavigationItem | undefined, $to: AxNavigationItem) {
     this.$from = $from;
     this.$to = $to;
     this.forceStopAnimation = this.animationStartTime != null;
     window.requestAnimationFrame(this.paintCanvas.bind(this));
   }
+
   private paintCanvas(time: number) {
     if (this.animationStartTime === null) this.animationStartTime = time;
 
