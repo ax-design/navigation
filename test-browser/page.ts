@@ -237,7 +237,7 @@ async function run() {
         }
     }
     check('the point is out while the leading end travels', pointOut > 4, 'longest ' + pointOut.toFixed(1) + 'px');
-    check('the leading end publishes its deformation', leadPeak > 0.6, 'peak ' + leadPeak.toFixed(2));
+    check('each part of the movement publishes how far it is', leadPeak > 0.6, 'reached ' + leadPeak.toFixed(2));
     check(
         'the point is gone when the leading end lands',
         pointClearAtArrival,
@@ -253,7 +253,7 @@ async function run() {
     }
     check('the bar is plain when it lands', backAtLanding);
     check(
-        'the deformation of an end is zero while it stands',
+        'the progress of each part is zero while the bar stands',
         computedNumber('--navigation-indicator-lead') === 0 && computedNumber('--navigation-indicator-trail') === 0,
         'lead ' + computedNumber('--navigation-indicator-lead') + ', trail ' + computedNumber('--navigation-indicator-trail')
     );

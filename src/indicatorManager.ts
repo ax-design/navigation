@@ -133,7 +133,7 @@ class IndicatorManager {
         this.$from = this.$container.currentItem;
         this.$to = undefined;
         this.markMoving(null);
-        this.clearBells();
+        this.clearRamps();
     }
 
     // Paints the bar of the current item, coalesced to one frame. Skipped while a movement owns
@@ -194,7 +194,7 @@ class IndicatorManager {
         this.cancelRest();
         this.stopFollow();
         this.markMoving(null);
-        this.clearBells();
+        this.clearRamps();
         this.requestRest();
     }
 
@@ -269,16 +269,18 @@ class IndicatorManager {
         this.$container.style.setProperty(name, text);
     }
 
-    // The deformation of one end of the movement: greatest half way through the travel of that
-    // end, zero while it stands and when it has arrived.
-    private setBell(name: string, value: number): void {
-        const text = String(Math.round(value * 1000) / 1000);
+    // How far one part of a movement is, from 0 at its start to 1 at its end. A plain ramp, not
+    // the eased travel of the bar: a style gives a feature its own curve over it, so the shape
+    // does not inherit the easing of the movement.
+    private setRamp(name: string, value: number): void {
+        const clamped = value < 0 ? 0 : value > 1 ? 1 : value;
+        const text = String(Math.round(clamped * 1000) / 1000);
         if (this.$container.style.getPropertyValue(name) !== text) this.$container.style.setProperty(name, text);
     }
 
-    private clearBells(): void {
-        this.setBell(LEAD_PROPERTY, 0);
-        this.setBell(TRAIL_PROPERTY, 0);
+    private clearRamps(): void {
+        this.setRamp(LEAD_PROPERTY, 0);
+        this.setRamp(TRAIL_PROPERTY, 0);
     }
 
     private styleNow(): IndicatorStyle {
@@ -339,7 +341,7 @@ class IndicatorManager {
         this.frameHandle = null;
         if (!this.$from || !this.$to) {
             this.markMoving(null);
-            this.clearBells();
+            this.clearRamps();
             return;
         }
         if (this.animationStartTime === null) this.animationStartTime = time;
@@ -347,11 +349,11 @@ class IndicatorManager {
         const progress = (time - this.animationStartTime) / style.speed;
         const grow = progress < animationBreakPoint ? growAnimationFn(progress / animationBreakPoint) : 1;
         const cut = progress > animationBreakPoint ? cutAnimationFn((progress - animationBreakPoint) / (1 - animationBreakPoint)) : 0;
-        // The two ends as deformations a style can shape a feature with. Each is zero once its end
-        // has arrived, so an end lands plain. They are written before the shape is read, so the
-        // frame draws the deformation of the frame it belongs to.
-        this.setBell(LEAD_PROPERTY, 4 * grow * (1 - grow));
-        this.setBell(TRAIL_PROPERTY, 4 * cut * (1 - cut));
+        // How far each part of the movement is, as plain ramps: the leading end runs from 0 at the
+        // start to 1 when it arrives, and the trailing end from 0 then to 1 when the bar lands.
+        // They are written before the shape is read, so a frame draws the shape of that frame.
+        this.setRamp(LEAD_PROPERTY, progress / animationBreakPoint);
+        this.setRamp(TRAIL_PROPERTY, (progress - animationBreakPoint) / (1 - animationBreakPoint));
         // The shape numbers are read again on every frame, because a style can shape them.
         this.values.values = this.binding.read();
         const thickness = Math.max(0, this.readNumber('--navigation-indicator-width', style.thickness));
@@ -386,6 +388,8 @@ class IndicatorManager {
         this.$from = undefined;
         this.$to = undefined;
         this.markMoving(null);
+        // Both parts are over: a style that shaped a feature over them is drawn plain again.
+        this.clearRamps();
         this.refreshRest();
     }
 

@@ -9,7 +9,7 @@
     .custom-color { --navigation-indicator-color: red; }
     .custom-width { --navigation-indicator-width: 6px; }
     .custom-speed { --navigation-indicator-speed: 100ms; }
-    /* A feature is shaped from the deformation of its own end, so it is gone when that end
+    /* A feature is shaped over the progress of its own end, so it is gone when that end
        arrives. The shape is read every frame, with no animation of a custom property. */
     .animated-shape {
       --navigation-indicator-speed: 600ms;
@@ -17,12 +17,15 @@
       --ax-edge-right-span: 100%;
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
-      --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
-      --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+      /* Full depth over the middle of each end, tapering at both ends. */
+      --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
+      --trail: min(var(--navigation-indicator-trail, 0) * 2.5, 1, (1 - var(--navigation-indicator-trail, 0)) * 2.5);
+      --ax-edge-right-depth: calc(var(--lead) * 9px);
+      --ax-edge-left-depth: calc(var(--trail) * -7px);
     }
     .animated-shape[moving="backward"] {
-      --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
-      --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+      --ax-edge-right-depth: calc(var(--trail) * -7px);
+      --ax-edge-left-depth: calc(var(--lead) * 9px);
     }
   </style>
 </head>
