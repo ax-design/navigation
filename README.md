@@ -123,19 +123,31 @@ over the items.
 ### Moving
 
 While the indicator is moving from one item to another the element carries the `moving`
-attribute, and loses it when it arrives. It stays on while a movement is retargeted, so a
-transition written for it does not restart in the middle of one. The shape properties are
-registered, so they transition, and the canvas follows those transitions frame by frame.
+attribute, with `forward` or `backward` as its value: forward is toward the end of the item
+order, which is right in a horizontal navigation and down in a vertical one. The attribute goes
+away when the indicator arrives, and stays on while a movement is retargeted, so a transition
+written for it does not restart in the middle of one.
+
+The shape properties are registered, so they transition, and the canvas follows them while they
+change, so a feature a style animates is drawn while it moves.
 
 ```css
 ax-navigation {
   --ax-edge-right-kind: triangle;
   --ax-edge-right-span: 100%;
-  transition: --ax-edge-right-depth 200ms;
+  --ax-edge-left-kind: triangle;
+  --ax-edge-left-span: 100%;
+  transition: --ax-edge-right-depth 200ms, --ax-edge-left-depth 200ms;
 }
 
-ax-navigation[moving] {
+ax-navigation[moving="forward"] {
   --ax-edge-right-depth: 9px;
+  --ax-edge-left-depth: -7px;
+}
+
+ax-navigation[moving="backward"] {
+  --ax-edge-left-depth: 9px;
+  --ax-edge-right-depth: -7px;
 }
 ```
 

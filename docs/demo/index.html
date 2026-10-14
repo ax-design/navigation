@@ -84,9 +84,13 @@
       --ax-edge-left-span: 100%;
       transition: --ax-edge-right-depth 200ms, --ax-edge-left-depth 200ms;
     }
-    .shape-animated[moving] {
+    .shape-animated[moving="forward"] {
       --ax-edge-right-depth: 9px;
       --ax-edge-left-depth: -7px;
+    }
+    .shape-animated[moving="backward"] {
+      --ax-edge-left-depth: 9px;
+      --ax-edge-right-depth: -7px;
     }
     .shape-lean {
       --ax-corner-top-left-shift-x: 10px;
@@ -394,7 +398,7 @@
       </div>
       <div class="code">
         <h2>Animated Indicator</h2>
-        <p>The element carries <code>moving</code> while the indicator runs, and the end features transition on it.</p>
+        <p>The element carries <code>moving</code>, forward or backward, while the indicator runs, and the end features transition on it.</p>
         <pre>ax-navigation {
   --navigation-indicator-speed: 900ms;
   --navigation-indicator-width: 14px;
@@ -405,9 +409,14 @@
   transition: --ax-edge-right-depth 200ms, --ax-edge-left-depth 200ms;
 }
 
-ax-navigation[moving] {
+ax-navigation[moving="forward"] {
   --ax-edge-right-depth: 9px;
   --ax-edge-left-depth: -7px;
+}
+
+ax-navigation[moving="backward"] {
+  --ax-edge-left-depth: 9px;
+  --ax-edge-right-depth: -7px;
 }</pre>
       </div>
     </section>
