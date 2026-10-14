@@ -46,6 +46,7 @@ class IndicatorManager {
   private readonly binding: StyleBinding;
   private animationStartTime: number | null;
   private forceStopAnimation: boolean;
+  private frameHandle: number | null;
   private $from?: AxNavigationItem;
   private $to?: AxNavigationItem;
 
@@ -53,8 +54,15 @@ class IndicatorManager {
     this.$container = $container;
     this.animationStartTime = null;
     this.forceStopAnimation = false;
+    this.frameHandle = null;
     this.$from = $defaultHighlight;
     this.binding = new StyleBinding(navigationSchema, $container, $container.root);
+  }
+
+  // 排下一帧前先取消已排队的回调，保证同一时刻只有一条动画链在跑。
+  private schedule(): void {
+    if (this.frameHandle !== null) window.cancelAnimationFrame(this.frameHandle);
+    this.frameHandle = window.requestAnimationFrame(this.paintCanvas.bind(this));
   }
 
   private getIndicatorStyle(): IndicatorStyle {
@@ -73,10 +81,17 @@ class IndicatorManager {
     this.$from = $from;
     this.$to = $to;
     this.forceStopAnimation = this.animationStartTime != null;
-    window.requestAnimationFrame(this.paintCanvas.bind(this));
+    this.schedule();
   }
 
   private paintCanvas(time: number) {
+    this.frameHandle = null;
+
+    // 没有待播的过渡时必须直接返回、不碰任何状态：否则 animationStartTime
+    // 会被设成非 null 却永远无人清除，之后每次 switch 都会误判为"动画进行中"
+    // 而走强制硬跳分支。
+    if (!this.$from || !this.$to) return;
+
     if (this.animationStartTime === null) this.animationStartTime = time;
 
     const canvasBox = this.$container.canvas.getBoundingClientRect();
@@ -134,7 +149,7 @@ class IndicatorManager {
         }
 
         if (progress < 1) {
-          window.requestAnimationFrame(this.paintCanvas.bind(this));
+          this.schedule();
           return;
         }
       }
