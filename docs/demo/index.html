@@ -30,6 +30,51 @@
     .indicator-speed {
       --navigation-indicator-speed: 2000ms;
     }
+
+    .shape-pill {
+      --navigation-indicator-width: 14px;
+      --ax-radius: 7px;
+    }
+    .shape-bevel {
+      --navigation-indicator-width: 14px;
+      --ax-radius: 6px;
+      --ax-corner-shape: bevel;
+    }
+    .shape-scoop {
+      --navigation-indicator-width: 14px;
+      --ax-radius: 5px;
+      --ax-corner-shape: scoop;
+    }
+    .shape-notch {
+      --navigation-indicator-width: 16px;
+      --ax-radius: 6px;
+      --ax-corner-shape: notch;
+    }
+    .shape-lean {
+      --navigation-indicator-width: 14px;
+      --ax-corner-top-left-shift-x: 10px;
+      --ax-corner-bottom-right-shift-x: 10px;
+    }
+    .shape-bump {
+      --navigation-indicator-width: 12px;
+      --ax-radius: 6px;
+      --ax-edge-bottom-kind: arc;
+      --ax-edge-bottom-depth: 5px;
+      --ax-edge-bottom-span: 40%;
+    }
+    .shape-bite {
+      --navigation-indicator-width: 18px;
+      --ax-radius: 9px;
+      --ax-edge-top-kind: arc;
+      --ax-edge-top-depth: -6px;
+      --ax-edge-top-span: 34%;
+    }
+    .shape-arrow {
+      --navigation-indicator-width: 14px;
+      --ax-edge-right-kind: triangle;
+      --ax-edge-right-depth: 8px;
+      --ax-edge-right-span: 100%;
+    }
   </style>
 </head>
 
@@ -163,6 +208,195 @@
       </div>
     </section>
 
+    <h1>Shapes</h1>
+    <p>The indicator is a shape of <code>@ax-design/surface</code>, so it takes that contract:
+      corners move and change shape, and every side carries one feature. A navigation without any
+      of these properties shows the plain rectangle it always did. The bar is
+      <code>--navigation-indicator-width</code> across and the width of the current item along, and
+      the same frame is used in both directions, so <code>top</code> and <code>bottom</code> are the two
+      long sides (<code>top</code> facing the content) and <code>right</code> and <code>left</code> are the
+      end it moves toward and the end it starts from.</p>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-pill">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>Pill</h2>
+        <p>A radius of half the thickness rounds both ends of the bar.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 14px;
+  --ax-radius: 7px;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-bevel">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>Cut corners</h2>
+        <p>The corner shape of surface applies to the indicator: round, bevel, scoop or notch.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 14px;
+  --ax-radius: 6px;
+  --ax-corner-shape: bevel;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-scoop">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>Scooped corners</h2>
+        <p>A scoop bends the corner inward, so the bar gains a waist at both ends.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 14px;
+  --ax-radius: 5px;
+  --ax-corner-shape: scoop;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-notch">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>Notched corners</h2>
+        <p>A notch cuts the corner out of the bar.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 16px;
+  --ax-radius: 6px;
+  --ax-corner-shape: notch;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-lean">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>Parallelogram</h2>
+        <p>Moving two opposite corners on x leans the bar. The same declaration leans a vertical navigation too.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 14px;
+  --ax-corner-top-left-shift-x: 10px;
+  --ax-corner-bottom-right-shift-x: 10px;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-bump">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>A bump along the bar</h2>
+        <p>An edge feature sits on one of the four sides. bottom is the long side away from the content.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 12px;
+  --ax-radius: 6px;
+  --ax-edge-bottom-kind: arc;
+  --ax-edge-bottom-depth: 5px;
+  --ax-edge-bottom-span: 40%;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-bite">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>A bite into the bar</h2>
+        <p>A negative depth puts the arc into the bar instead of out of it.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 18px;
+  --ax-radius: 9px;
+  --ax-edge-top-kind: arc;
+  --ax-edge-top-depth: -6px;
+  --ax-edge-top-span: 34%;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-arrow">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>A pointed end</h2>
+        <p>right is the end the indicator moves toward, left the one it starts from. Their sides are the thickness of the bar, so a feature that spans all of it caps the end.</p>
+        <pre>ax-navigation {
+  --navigation-indicator-width: 14px;
+  --ax-edge-right-kind: triangle;
+  --ax-edge-right-depth: 8px;
+  --ax-edge-right-span: 100%;
+}</pre>
+      </div>
+    </section>
+
+    <section class="demo-block">
+      <div class="demo">
+        <ax-navigation class="shape-lean">
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+        <div style="height: 24px"></div>
+        <ax-navigation class="shape-lean" vertical>
+          <ax-navigation-item>Home</ax-navigation-item>
+          <ax-navigation-item>Apps</ax-navigation-item>
+          <ax-navigation-item>Games</ax-navigation-item>
+        </ax-navigation>
+      </div>
+      <div class="code">
+        <h2>The same shape, both directions</h2>
+        <p>The declaration written for the horizontal bar leans the vertical one the same way.
+          Nothing is written twice and no direction-dependent property name appears.</p>
+        <pre>ax-navigation {
+  --ax-corner-top-left-shift-x: 10px;
+  --ax-corner-bottom-right-shift-x: 10px;
+}</pre>
+      </div>
+    </section>
     <script src="../../build/main.js"></script>
     <script>AxNavigation.register()</script>
     <script type="module">
