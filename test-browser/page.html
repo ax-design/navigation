@@ -9,6 +9,13 @@
     .custom-color { --navigation-indicator-color: red; }
     .custom-width { --navigation-indicator-width: 6px; }
     .custom-speed { --navigation-indicator-speed: 100ms; }
+    /* A shape property that transitions while the indicator carries the moving mark. */
+    .animated-shape {
+      --ax-edge-right-kind: triangle;
+      --ax-edge-right-span: 100%;
+      transition: --ax-edge-right-depth 200ms ease-out;
+    }
+    .animated-shape[moving] { --ax-edge-right-depth: 9px; }
   </style>
 </head>
 <body>

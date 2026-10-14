@@ -186,6 +186,38 @@ async function run() {
         'strip right ' + vBox.right.toFixed(1) + ' of ' + vprobe.canvas.getBoundingClientRect().width.toFixed(1)
     );
 
+    // The element marks itself while the indicator runs, and a style can follow the mark: an
+    // end feature that transitions on it grows out and is gone again once the bar arrives.
+    const anim = document.createElement(AxNavigation.ElementName) as AxNavigation;
+    anim.className = 'animated-shape';
+    anim.innerHTML = '<ax-navigation-item>One</ax-navigation-item><ax-navigation-item>Two</ax-navigation-item><ax-navigation-item>Three</ax-navigation-item>';
+    document.body.appendChild(anim);
+    await frames(8);
+    const animFrom = anim.querySelector(AxNavigationItem.ElementName) as AxNavigationItem;
+    const animTo = anim.querySelectorAll(AxNavigationItem.ElementName)[1] as AxNavigationItem;
+    check('a settled indicator does not carry the moving mark', !anim.hasAttribute('moving'));
+    animTo.click();
+    check('the indicator carries the moving mark while it runs', anim.hasAttribute('moving'));
+    await frames(20);
+    const midFlight = painted(anim);
+    const animBox = anim.canvas.getBoundingClientRect();
+    const targetRight = animTo.getBoundingClientRect().right - animBox.left;
+    check(
+        'an end feature that transitions on the mark grows while the indicator moves',
+        midFlight.right > targetRight + 4,
+        'painted right ' + midFlight.right.toFixed(1) + ', item right ' + targetRight.toFixed(1)
+    );
+    await frames(90);
+    check('the moving mark is gone once the indicator has arrived', !anim.hasAttribute('moving'));
+    const landed = painted(anim);
+    check(
+        'the end feature shrinks back after the indicator arrives',
+        Math.abs(landed.right - targetRight) < 3,
+        'painted right ' + landed.right.toFixed(1) + ', item right ' + targetRight.toFixed(1)
+    );
+    check('the same item is current after the move', anim.currentItem === animTo, 'current ' + (anim.currentItem === animTo ? 'Two' : 'other'));
+    check('the start item is still the first one', !!animFrom);
+
     return { userAgent: navigator.userAgent, checks };
 }
 

@@ -120,6 +120,25 @@ same canvas as the moving one, so the two always agree. The layout keeps free th
 outward feature takes on the side away from the content; on the side facing the content it draws
 over the items.
 
+### Moving
+
+While the indicator is moving from one item to another the element carries the `moving`
+attribute, and loses it when it arrives. It stays on while a movement is retargeted, so a
+transition written for it does not restart in the middle of one. The shape properties are
+registered, so they transition, and the canvas follows those transitions frame by frame.
+
+```css
+ax-navigation {
+  --ax-edge-right-kind: triangle;
+  --ax-edge-right-span: 100%;
+  transition: --ax-edge-right-depth 200ms;
+}
+
+ax-navigation[moving] {
+  --ax-edge-right-depth: 9px;
+}
+```
+
 ## Events
 
 ### Switch

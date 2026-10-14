@@ -11,6 +11,10 @@ import type { Along, Box, Direction } from './bar.js';
 const growAnimationFn = BezierEasing(0.7, 0, 1, 0.5);
 const cutAnimationFn = BezierEasing(0.1, 0.9, 0.2, 1);
 const animationBreakPoint = 0.3;
+// A shape transition is followed for this long after its last event, and a burst of them may
+// keep the canvas awake for this long at most.
+const SHAPE_TRANSITION_TAIL = 250;
+const SHAPE_TRANSITION_LIMIT = 2000;
 
 const navigationSchema = new StyleSchema(NAVIGATION_PROPERTIES);
 
@@ -36,6 +40,12 @@ function toCssColor(value: PropertyValue): string {
     return 'rgb(0, 0, 0)';
 }
 
+// The margins the canvas keeps on either side of the bar, to 0.01 px, so a resolved bound
+// that carries rounding error does not move the layout.
+function roundPad(value: number): number {
+    return Math.max(0, Math.round(value * 100) / 100);
+}
+
 function parseSpeed(element: Element, fallback = 600): number {
     const text = getComputedStyle(element).getPropertyValue('--navigation-indicator-speed').trim();
     if (!text) return fallback;
@@ -59,6 +69,9 @@ class IndicatorManager {
     private animationStartTime: number | null;
     private frameHandle: number | null;
     private restHandle: number | null;
+    private shapeHandle: number | null;
+    private shapeDeadline: number;
+    private shapeStart: number;
     // The part of the bar drawn when the previous transition was interrupted, in canvas
     // coordinates, so the next one continues from where the drawn one ended.
     private fromRect: Rect | null;
@@ -74,6 +87,9 @@ class IndicatorManager {
         this.animationStartTime = null;
         this.frameHandle = null;
         this.restHandle = null;
+        this.shapeHandle = null;
+        this.shapeDeadline = 0;
+        this.shapeStart = 0;
         this.fromRect = null;
         this.lastRect = null;
         this.$from = $container.currentItem;
@@ -86,10 +102,19 @@ class IndicatorManager {
             this.style = null;
             this.requestRest();
         });
+        // A shape transition is followed frame by frame, so a feature that grows keeps growing
+        // on the canvas instead of jumping when the transition ends.
+        this.$container.addEventListener('transitionrun', this.onTransition);
+        this.$container.addEventListener('transitionend', this.onTransition);
+        this.$container.addEventListener('transitioncancel', this.onTransition);
     }
 
     unobserve(): void {
         this.binding.unobserve();
+        this.$container.removeEventListener('transitionrun', this.onTransition);
+        this.$container.removeEventListener('transitionend', this.onTransition);
+        this.$container.removeEventListener('transitioncancel', this.onTransition);
+        this.stopShapeFrames();
     }
 
     // Paints the bar of the current item, coalesced to one frame. Skipped while a transition
@@ -108,6 +133,44 @@ class IndicatorManager {
         this.restHandle = null;
     }
 
+    // The element carries the attribute while the indicator runs, so a style can follow the
+    // movement instead of guessing how long it lasts. An interrupted transition keeps it, so
+    // such a style does not restart.
+    private setMoving(moving: boolean): void {
+        if (moving) this.$container.setAttribute('moving', '');
+        else this.$container.removeAttribute('moving');
+    }
+
+    private onTransition = (): void => {
+        const now = performance.now();
+        if (this.shapeStart === 0) this.shapeStart = now;
+        this.shapeDeadline = Math.min(now + SHAPE_TRANSITION_TAIL, this.shapeStart + SHAPE_TRANSITION_LIMIT);
+        this.scheduleShapeFrame();
+    };
+
+    // Keeps the resting bar on the canvas while its shape properties transition. A movement
+    // already repaints and reads the values itself, so this steps aside while it runs.
+    private scheduleShapeFrame(): void {
+        if (this.shapeHandle !== null) return;
+        this.shapeHandle = window.requestAnimationFrame(() => {
+            this.shapeHandle = null;
+            if (this.animationStartTime !== null) return;
+            if (performance.now() >= this.shapeDeadline) {
+                this.shapeStart = 0;
+                return;
+            }
+            this.paintRest();
+            this.scheduleShapeFrame();
+        });
+    }
+
+    private stopShapeFrames(): void {
+        if (this.shapeHandle !== null) window.cancelAnimationFrame(this.shapeHandle);
+        this.shapeHandle = null;
+        this.shapeStart = 0;
+        this.shapeDeadline = 0;
+    }
+
     // The direction changed: the canvas box and the canonical space turn with it, so a running
     // transition is dropped and the indicator is drawn again where the current item is.
     directionChanged(): void {
@@ -120,6 +183,7 @@ class IndicatorManager {
         this.$from = this.$container.currentItem;
         this.$to = undefined;
         this.cancelRest();
+        this.setMoving(false);
         this.requestRest();
     }
 
@@ -131,6 +195,8 @@ class IndicatorManager {
         this.animationStartTime = null;
         this.$from = $from;
         this.$to = $to;
+        // Nothing to move from: the indicator is simply drawn where it belongs.
+        if ($from) this.setMoving(true);
         this.cancelRest();
         this.schedule();
     }
@@ -140,13 +206,13 @@ class IndicatorManager {
         this.frameHandle = window.requestAnimationFrame(this.paint.bind(this));
     }
 
-    // Reads the style the indicator is drawn with. Called when a transition starts and when the
-    // style changed, not once per frame: the shape properties do not move while the bar grows.
+    // Reads the style the indicator is drawn with, including the margins an outward feature
+    // needs. Called when a transition starts and when the style changed; the shape numbers
+    // themselves are read again on every frame of a movement, because they can be animated.
     private readStyle(): IndicatorStyle {
         this.values.values = this.binding.read();
         const direction = directionOf(this.$container);
-        const width = this.binding.get('--navigation-indicator-width');
-        const thickness = Math.max(0, typeof width === 'number' ? width : 2);
+        const thickness = Math.max(0, this.readNumber('--navigation-indicator-width', 2));
         // Outward features stick out of the bar: the canvas box and the space the layout keeps
         // free have to cover them. The overhang does not depend on how long the bar is, so one
         // measurement at the container's own length is enough and the pads stay put while the
@@ -154,8 +220,8 @@ class IndicatorManager {
         const host = this.$container.getBoundingClientRect();
         const nominal = Math.max(1, direction === 'vertical' ? host.height : host.width);
         const bounds = resolve(shapeSpecFrom(this.values, nominal, thickness)).bounds;
-        const padInner = Math.max(0, -bounds.top);
-        const padOuter = Math.max(0, bounds.bottom - thickness);
+        const padInner = roundPad(-bounds.top);
+        const padOuter = roundPad(bounds.bottom - thickness);
         this.setPad(PAD_INNER, padInner);
         this.setPad(PAD_OUTER, padOuter);
         return {
@@ -166,6 +232,11 @@ class IndicatorManager {
             padInner,
             padOuter,
         };
+    }
+
+    private readNumber(name: string, fallback: number): number {
+        const value = this.binding.get(name);
+        return typeof value === 'number' ? value : fallback;
     }
 
     private setPad(name: string, value: number): void {
@@ -189,14 +260,21 @@ class IndicatorManager {
         }
         const box = this.$container.canvas.getBoundingClientRect();
         const span = along(item.getBoundingClientRect(), box, style.direction);
-        this.draw(span.start, span.start + span.size, style);
+        this.draw(span.start, span.start + span.size, style, style.thickness);
     }
 
     private paint(time: number): void {
         this.frameHandle = null;
-        if (!this.$from || !this.$to) return;
+        if (!this.$from || !this.$to) {
+            this.setMoving(false);
+            return;
+        }
         if (this.animationStartTime === null) this.animationStartTime = time;
         const style = this.style || this.styleNow();
+        // A shape can be animated in CSS while the indicator runs, so its numbers are read
+        // again on every frame. The margins, the direction and the color come from the style.
+        this.values.values = this.binding.read();
+        const thickness = Math.max(0, this.readNumber('--navigation-indicator-width', style.thickness));
         const canvasBox = this.$container.canvas.getBoundingClientRect();
         const from = this.startBox(canvasBox, style.direction);
         const to = along(this.$to.getBoundingClientRect(), canvasBox, style.direction);
@@ -214,7 +292,7 @@ class IndicatorManager {
         const hi = reverse
             ? fromEnd - (fromEnd - toEnd) * cut
             : fromEnd + (toEnd - fromEnd) * grow;
-        this.draw(lo, hi, style);
+        this.draw(lo, hi, style, thickness);
         // Remember what was drawn, in canvas coordinates, so an interrupted transition
         // continues from the drawn bar instead of from the item it started at. There is no
         // scroll offset to correct for: the canvas travels with the items.
@@ -227,6 +305,7 @@ class IndicatorManager {
         this.lastRect = null;
         this.$from = undefined;
         this.$to = undefined;
+        this.setMoving(false);
         this.paintRest();
     }
 
@@ -263,22 +342,40 @@ class IndicatorManager {
     }
 
     // Draws the bar from lo to hi, in canonical coordinates relative to the canvas box.
-    private draw(lo: number, hi: number, style: IndicatorStyle): void {
-        const ctx = this.$container.ctx;
+    private draw(lo: number, hi: number, style: IndicatorStyle, thickness: number): void {
+        const length = hi - lo;
+        if (!(length > 0) || !(thickness > 0)) {
+            this.clear();
+            return;
+        }
+        const shape = resolve(shapeSpecFrom(this.values, length, thickness));
+        // A feature that grows outward needs room on the canvas. The margins are written before
+        // the box is measured, so the drawing and the box use the same ones.
+        this.growPads(style, shape.bounds.top, shape.bounds.bottom, thickness);
         const size = this.resize();
+        const ctx = this.$container.ctx;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, size.width, size.height);
-        const length = hi - lo;
-        if (!(length > 0) || !(style.thickness > 0)) return;
-        const shape = resolve(shapeSpecFrom(this.values, length, style.thickness));
         const dpr = window.devicePixelRatio || 1;
-        const m = matrix(style.direction, style.thickness, style.padInner, style.padOuter, dpr);
+        const m = matrix(style.direction, thickness, style.padInner, style.padOuter, dpr);
         ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
         ctx.translate(lo, 0);
         ctx.fillStyle = style.color;
         ctx.beginPath();
         traceContour(ctx, shape.outline);
         ctx.fill();
+    }
+
+    // A growing feature can need more room than the style asked for. The margins only ever
+    // grow, so a movement never takes the layout back and forth.
+    private growPads(style: IndicatorStyle, top: number, bottom: number, thickness: number): void {
+        const padInner = Math.max(style.padInner, roundPad(-top));
+        const padOuter = Math.max(style.padOuter, roundPad(bottom - thickness));
+        if (padInner === style.padInner && padOuter === style.padOuter) return;
+        style.padInner = padInner;
+        style.padOuter = padOuter;
+        this.setPad(PAD_INNER, padInner);
+        this.setPad(PAD_OUTER, padOuter);
     }
 }
 
