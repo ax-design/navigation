@@ -5,8 +5,8 @@
     "": {
       "name": "@ax-design/navigation",
       "dependencies": {
-        "@ax-design/shape": "file:../shape",
-        "@ax-design/surface": "file:../surface",
+        "@ax-design/shape": "^0.2.0",
+        "@ax-design/surface": "^0.2.3",
         "@ax-design/typed-om": "^0.1.0",
         "bezier-easing": "^2.1.0",
       },
@@ -19,15 +19,9 @@
     },
   },
   "packages": {
-    "@ax-design/acrylic": ["@ax-design/acrylic@0.2.0", "", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/surface": "^0.2.0", "@ax-design/typed-om": "^0.1.0" } }, "sha512-n/NzA17QR1XCmn6O3LYha+nIuHoSTCvMgLThDXzTTkZVFvisrGSjNkR2KkXsTBjOmCp5r3gfJ5VvbvfMQ0kgiA=="],
+    "@ax-design/shape": ["@ax-design/shape@0.2.0", "", {}, "sha512-gN9MfjgJvvS3EXkvz+CSSCUHHleCJ/TbZRLYlhOnj39kr0tujVoFOE063cCn9w7pfNJHLJc63kbuRDT4sYdClA=="],
 
-    "@ax-design/elevation": ["@ax-design/elevation@0.1.0", "", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/surface": "^0.2.0", "@ax-design/typed-om": "^0.1.0" } }, "sha512-m2OLQbD/s1tUQ0+yt+SRdULSvvzo9bl1KTlIhpPbQW0R2Xv+pmQTuuLJ8byx0jPdV0VMdKXf5AmvGdoAfgIBZw=="],
-
-    "@ax-design/reveal-highlight": ["@ax-design/reveal-highlight@0.6.2", "", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/surface": "^0.2.0", "@ax-design/typed-om": "^0.1.0" } }, "sha512-LwzomeBMEZRWLP6npjsc3Ouei/NQ7mIaWqmoxaUjqB5qrN/bGqLEX2dPrICb/XN2Dsvk4kbMWu68V7FljdPCLQ=="],
-
-    "@ax-design/shape": ["@ax-design/shape@file:../shape", { "devDependencies": { "@types/bun": "latest", "typescript": "^5.6.0" } }],
-
-    "@ax-design/surface": ["@ax-design/surface@file:../surface", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/typed-om": "^0.1.0" }, "devDependencies": { "@ax-design/acrylic": "^0.2.0", "@ax-design/elevation": "^0.1.0", "@ax-design/reveal-highlight": "^0.6.2", "@types/bun": "latest", "playwright": "^1.64.0", "typescript": "^5.6.0" } }],
+    "@ax-design/surface": ["@ax-design/surface@0.2.3", "", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/typed-om": "^0.1.0" } }, "sha512-0RySDQQg9OOFb3BVVY7LlbBi3RMoD/b7cKs5OHj0YlbhTuDS3WELlWJMk4HIG5aV18bV8PVtSk0qotWkJM6qnQ=="],
 
     "@ax-design/typed-om": ["@ax-design/typed-om@0.1.0", "", {}, "sha512-v3I8wDLMFbWDN9cZkDpy9qYonMQfqUU0DIL9DOChTO3dBRzWUk/taZZBUgmNTkA0kvn+g5NbB7pGcSuQAbz9cA=="],
 
@@ -48,20 +42,6 @@
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@8.11.2", "", {}, "sha512-iMVNmWZ0leK/goS6eXMizSzmm9CDWtyphwbaCms3DNLqRxDL+mMoNVcZMTyyVgXP0N+Z8neAMzDoUOUJL8veKg=="],
-
-    "@ax-design/acrylic/@ax-design/shape": ["@ax-design/shape@0.2.0", "", {}, "sha512-gN9MfjgJvvS3EXkvz+CSSCUHHleCJ/TbZRLYlhOnj39kr0tujVoFOE063cCn9w7pfNJHLJc63kbuRDT4sYdClA=="],
-
-    "@ax-design/acrylic/@ax-design/surface": ["@ax-design/surface@0.2.1", "", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/typed-om": "^0.1.0" } }, "sha512-rMu0iqxwWnssBg/jYuFFJt5TiKlTqiH8elXBoEHGNugboFzI9R7RyyTZE0tJWW/RDi52dCvX5Z+UEE6iGG2Sow=="],
-
-    "@ax-design/elevation/@ax-design/shape": ["@ax-design/shape@0.2.0", "", {}, "sha512-gN9MfjgJvvS3EXkvz+CSSCUHHleCJ/TbZRLYlhOnj39kr0tujVoFOE063cCn9w7pfNJHLJc63kbuRDT4sYdClA=="],
-
-    "@ax-design/elevation/@ax-design/surface": ["@ax-design/surface@0.2.1", "", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/typed-om": "^0.1.0" } }, "sha512-rMu0iqxwWnssBg/jYuFFJt5TiKlTqiH8elXBoEHGNugboFzI9R7RyyTZE0tJWW/RDi52dCvX5Z+UEE6iGG2Sow=="],
-
-    "@ax-design/reveal-highlight/@ax-design/shape": ["@ax-design/shape@0.2.0", "", {}, "sha512-gN9MfjgJvvS3EXkvz+CSSCUHHleCJ/TbZRLYlhOnj39kr0tujVoFOE063cCn9w7pfNJHLJc63kbuRDT4sYdClA=="],
-
-    "@ax-design/reveal-highlight/@ax-design/surface": ["@ax-design/surface@0.2.1", "", { "dependencies": { "@ax-design/shape": "^0.2.0", "@ax-design/typed-om": "^0.1.0" } }, "sha512-rMu0iqxwWnssBg/jYuFFJt5TiKlTqiH8elXBoEHGNugboFzI9R7RyyTZE0tJWW/RDi52dCvX5Z+UEE6iGG2Sow=="],
-
-    "@ax-design/surface/@ax-design/shape": ["@ax-design/shape@0.2.0", "", {}, "sha512-gN9MfjgJvvS3EXkvz+CSSCUHHleCJ/TbZRLYlhOnj39kr0tujVoFOE063cCn9w7pfNJHLJc63kbuRDT4sYdClA=="],
 
     "@types/bezier-easing/bezier-easing": ["bezier-easing@3.2.0", "", {}, "sha512-QOKIYCgHd06gsQg0G9k1/JnzzZ+PT99qqUmgRHQ+r5PI/gsjCn0l7LXW6gtXoPhVJviIjP01xg9E7eNime9fVw=="],
 

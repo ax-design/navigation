@@ -30,8 +30,8 @@
         "prepublishOnly": "bun run build"
     },
     "dependencies": {
-        "@ax-design/shape": "file:../shape",
-        "@ax-design/surface": "file:../surface",
+        "@ax-design/shape": "^0.2.0",
+        "@ax-design/surface": "^0.2.3",
         "@ax-design/typed-om": "^0.1.0",
         "bezier-easing": "^2.1.0"
     },
