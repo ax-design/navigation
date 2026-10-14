@@ -9,16 +9,25 @@
     .custom-color { --navigation-indicator-color: red; }
     .custom-width { --navigation-indicator-width: 6px; }
     .custom-speed { --navigation-indicator-speed: 100ms; }
-    /* A shape property that transitions while the indicator carries the moving mark. */
+    /* A shape animation that runs on the moving mark for as long as the movement lasts. */
     .animated-shape {
       --ax-edge-right-kind: triangle;
       --ax-edge-right-span: 100%;
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
-      transition: --ax-edge-right-depth 200ms ease-out, --ax-edge-left-depth 200ms ease-out;
     }
-    .animated-shape[moving="forward"] { --ax-edge-right-depth: 9px; --ax-edge-left-depth: -7px; }
-    .animated-shape[moving="backward"] { --ax-edge-left-depth: 9px; --ax-edge-right-depth: -7px; }
+    .animated-shape[moving="forward"] { animation: test-sharpen-forward var(--navigation-indicator-speed, 600ms) linear; }
+    .animated-shape[moving="backward"] { animation: test-sharpen-backward var(--navigation-indicator-speed, 600ms) linear; }
+    @keyframes test-sharpen-forward {
+      0% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
+      45% { --ax-edge-right-depth: 9px; --ax-edge-left-depth: -7px; }
+      100% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
+    }
+    @keyframes test-sharpen-backward {
+      0% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
+      45% { --ax-edge-left-depth: 9px; --ax-edge-right-depth: -7px; }
+      100% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
+    }
   </style>
 </head>
 <body>

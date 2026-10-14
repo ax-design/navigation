@@ -146,12 +146,20 @@ class IndicatorManager {
     // The element carries the direction of the movement while the indicator runs, so a style can
     // follow it instead of guessing how long it lasts. An interrupted movement keeps it, so such
     // a style does not restart in the middle of one.
-    private markMoving(moving: Moving | null): void {
+    private markMoving(moving: Moving | null, restart = false): void {
         if (moving === null) {
             if (this.$container.hasAttribute('moving')) this.$container.removeAttribute('moving');
             return;
         }
-        if (this.$container.getAttribute('moving') === moving) return;
+        const current = this.$container.getAttribute('moving');
+        if (current === moving && !restart) return;
+        if (current === moving) {
+            // A movement that was interrupted starts over, so a style that runs on the mark
+            // has to start over with it: dropping the mark and reading a layout property makes
+            // the style system see the change before the mark comes back.
+            this.$container.removeAttribute('moving');
+            void this.$container.offsetWidth;
+        }
         this.$container.setAttribute('moving', moving);
     }
 
@@ -189,7 +197,7 @@ class IndicatorManager {
         this.$from = $from;
         this.$to = $to;
         // Nothing to move from: the indicator is simply drawn where it belongs.
-        if ($from) this.markMoving(this.isForward($from, $to) ? 'forward' : 'backward');
+        if ($from) this.markMoving(this.isForward($from, $to) ? 'forward' : 'backward', interrupting);
         this.cancelRest();
         this.schedule();
     }

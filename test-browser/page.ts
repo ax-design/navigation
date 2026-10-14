@@ -186,67 +186,70 @@ async function run() {
         'strip right ' + vBox.right.toFixed(1) + ' of ' + vprobe.canvas.getBoundingClientRect().width.toFixed(1)
     );
 
-    // The element carries the direction while the indicator runs, and a style can follow it: an
-    // end feature that transitions on the mark grows out on the leading end and is gone again
-    // once the bar has arrived.
+    // The element carries the direction while the indicator runs. A style on the mark can run for
+    // exactly as long as the movement, so its features are gone when the bar lands, instead of
+    // catching up with it afterwards.
     const anim = document.createElement(AxNavigation.ElementName) as AxNavigation;
     anim.className = 'animated-shape';
     anim.innerHTML = '<ax-navigation-item>One</ax-navigation-item><ax-navigation-item>Two</ax-navigation-item><ax-navigation-item>Three</ax-navigation-item>';
     document.body.appendChild(anim);
     await frames(8);
-    const animFrom = anim.querySelector(AxNavigationItem.ElementName) as AxNavigationItem;
-    const animTo = anim.querySelectorAll(AxNavigationItem.ElementName)[1] as AxNavigationItem;
+    const anims = anim.querySelectorAll(AxNavigationItem.ElementName);
+    const animOne = anims[0] as AxNavigationItem;
+    const animTwo = anims[1] as AxNavigationItem;
+    const animThree = anims[2] as AxNavigationItem;
     const animBox = anim.canvas.getBoundingClientRect();
     check('a settled indicator does not carry the moving mark', !anim.hasAttribute('moving'));
 
-    animTo.click();
+    animTwo.click();
     check('the indicator carries the direction while it runs', anim.getAttribute('moving') === 'forward', 'moving=' + anim.getAttribute('moving'));
-    await frames(20);
+    await frames(16);
     const midFlight = painted(anim);
-    const targetRight = animTo.getBoundingClientRect().right - animBox.left;
+    const twoRight = animTwo.getBoundingClientRect().right - animBox.left;
     check(
-        'the end feature grows on the leading end while it moves forward',
-        midFlight.right > targetRight + 4,
-        'painted right ' + midFlight.right.toFixed(1) + ', item right ' + targetRight.toFixed(1)
+        'the end feature is out in the middle of the movement',
+        midFlight.right > twoRight + 4,
+        'painted right ' + midFlight.right.toFixed(1) + ', item right ' + twoRight.toFixed(1)
     );
 
-    // The features have to come back frame by frame, not in one jump when the movement ends.
-    let shrinking = false;
-    for (let i = 0; i < 60 && !shrinking; i++) {
+    // The animation brings the features back on its own, so nothing is left to retract after the
+    // bar has landed.
+    let backAtLanding = false;
+    let stillOut = false;
+    for (let i = 0; i < 60 && !backAtLanding; i++) {
         await frames(1);
         if (anim.hasAttribute('moving')) continue;
         const now = painted(anim);
-        shrinking = now.right > targetRight + 1.5 && now.right < targetRight + 7.5;
+        if (now.right > twoRight + 3) stillOut = true;
+        backAtLanding = now.right <= twoRight + 3;
     }
-    check('the end feature shrinks back frame by frame', shrinking);
-    await frames(60);
-    check('the moving mark is gone once the indicator has arrived', !anim.hasAttribute('moving'));
-    const landed = painted(anim);
     check(
-        'the end feature is gone once the indicator has arrived',
-        Math.abs(landed.right - targetRight) < 3,
-        'painted right ' + landed.right.toFixed(1) + ', item right ' + targetRight.toFixed(1)
+        'the end feature is gone as soon as the bar lands',
+        backAtLanding && !stillOut,
+        'back at landing ' + backAtLanding + ', a frame was still out ' + stillOut
     );
 
-    animFrom.click();
-    check('the direction is reported on the way back', anim.getAttribute('moving') === 'backward', 'moving=' + anim.getAttribute('moving'));
-    await frames(20);
-    const backFlight = painted(anim);
-    const fromLeft = animFrom.getBoundingClientRect().left - animBox.left;
+    // Interrupting starts the movement over, and the animation on the mark starts over with it.
+    animThree.click();
+    await frames(6);
+    animOne.click();
+    await frames(16);
+    const afterInterrupt = painted(anim);
+    const oneLeft = animOne.getBoundingClientRect().left - animBox.left;
+    check('the direction follows an interrupted movement', anim.getAttribute('moving') === 'backward', 'moving=' + anim.getAttribute('moving'));
     check(
-        'the end feature grows on the leading end while it moves back',
-        backFlight.left < fromLeft - 4,
-        'painted left ' + backFlight.left.toFixed(1) + ', item left ' + fromLeft.toFixed(1)
+        'the end feature is out again after a movement was interrupted',
+        afterInterrupt.left < oneLeft - 4,
+        'painted left ' + afterInterrupt.left.toFixed(1) + ', item left ' + oneLeft.toFixed(1)
     );
     await frames(120);
-    const backLanded = painted(anim);
+    const settled = painted(anim);
     check(
-        'it settles on the item it moved back to',
-        Math.abs(backLanded.left - fromLeft) < 3 && !anim.hasAttribute('moving'),
-        'painted left ' + backLanded.left.toFixed(1) + ', item left ' + fromLeft.toFixed(1) + ', moving ' + anim.hasAttribute('moving')
+        'it settles on the item it moved to',
+        Math.abs(settled.left - oneLeft) < 3 && !anim.hasAttribute('moving'),
+        'painted left ' + settled.left.toFixed(1) + ', item left ' + oneLeft.toFixed(1) + ', moving ' + anim.hasAttribute('moving')
     );
-    check('the same item is current after the moves', anim.currentItem === animFrom, 'current ' + (anim.currentItem === animFrom ? 'One' : 'other'));
-    check('the second item is still there', !!animTo);
+    check('the same item is current after the moves', anim.currentItem === animOne, 'current ' + (anim.currentItem === animOne ? 'One' : 'other'));
 
     return { userAgent: navigator.userAgent, checks };
 }
