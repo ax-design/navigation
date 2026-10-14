@@ -147,10 +147,12 @@ ax-navigation {
   --ax-edge-right-span: 100%;
   --ax-edge-left-kind: triangle;
   --ax-edge-left-span: 100%;
-  /* Full depth over the middle of each part, tapering at both ends. A triangle is
+  /* A curve of the shape, not of the movement. The point spans its whole part; the
+     notch is over after 60% of the tail, which is where the tail stops moving and
+     only creeps for the rest of the movement. A plain triangle is
      min(lead, 1 - lead) * 18px instead. */
   --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
-  --trail: min(var(--navigation-indicator-trail, 0) * 2.5, 1, (1 - var(--navigation-indicator-trail, 0)) * 2.5);
+  --trail: max(0, min(var(--navigation-indicator-trail, 0) * 5, 1, (0.6 - var(--navigation-indicator-trail, 0)) * 5));
   --ax-edge-right-depth: calc(var(--lead) * 9px);
   --ax-edge-left-depth: calc(var(--trail) * -7px);
 }
