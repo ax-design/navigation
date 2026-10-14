@@ -83,22 +83,12 @@
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
     }
-    .shape-animated[moving="forward"] { animation: shape-forward var(--navigation-indicator-speed) linear; }
-    .shape-animated[moving="backward"] { animation: shape-backward var(--navigation-indicator-speed) linear; }
-    @keyframes shape-forward {
-      0% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
-      30% { --ax-edge-right-depth: 9px; --ax-edge-left-depth: 0px; }
-      50% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: -7px; }
-      75% { --ax-edge-left-depth: 0px; }
-      100% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
-    }
-    @keyframes shape-backward {
-      0% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
-      30% { --ax-edge-left-depth: 9px; --ax-edge-right-depth: 0px; }
-      50% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: -7px; }
-      75% { --ax-edge-right-depth: 0px; }
-      100% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
-    }
+    .shape-animated[moving="forward"] { animation: shape-point-forward var(--navigation-indicator-arrival) linear, shape-notch-forward var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival); }
+    .shape-animated[moving="backward"] { animation: shape-point-backward var(--navigation-indicator-arrival) linear, shape-notch-backward var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival); }
+    @keyframes shape-point-forward { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: 9px; } 100% { --ax-edge-right-depth: 0px; } }
+    @keyframes shape-notch-forward { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: -7px; } 100% { --ax-edge-left-depth: 0px; } }
+    @keyframes shape-point-backward { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: 9px; } 100% { --ax-edge-left-depth: 0px; } }
+    @keyframes shape-notch-backward { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: -7px; } 100% { --ax-edge-right-depth: 0px; } }
     .shape-lean {
       --ax-corner-top-left-shift-x: 10px;
       --ax-corner-bottom-right-shift-x: 10px;
@@ -405,7 +395,7 @@
       </div>
       <div class="code">
         <h2>Animated Indicator</h2>
-        <p>The element carries <code>moving</code>, forward or backward, while the indicator runs. The leading end reaches the item at 30% of the speed and the trailing end follows until the end: the point grows while the leading end travels, the notch while the trailing one does, and both are back before the bar settles.</p>
+        <p>The element carries <code>moving</code>, forward or backward, while the indicator runs, and the time each part of the movement takes. A feature grows and shrinks inside the part whose end carries it, so each end lands plain.</p>
         <pre>ax-navigation {
   --navigation-indicator-speed: 900ms;
   --navigation-indicator-width: 14px;
@@ -416,28 +406,23 @@
 }
 
 ax-navigation[moving="forward"] {
-  animation: shape-forward var(--navigation-indicator-speed) linear;
+  animation:
+    point var(--navigation-indicator-arrival) linear,
+    notch var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
 }
 
-@keyframes shape-forward {
-  0% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
-  30% { --ax-edge-right-depth: 9px; --ax-edge-left-depth: 0px; }
-  50% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: -7px; }
-  75% { --ax-edge-left-depth: 0px; }
-  100% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
-}
+@keyframes point { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: 9px; } 100% { --ax-edge-right-depth: 0px; } }
+@keyframes notch { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: -7px; } 100% { --ax-edge-left-depth: 0px; } }
 
+/* backward swaps the two sides */
 ax-navigation[moving="backward"] {
-  animation: shape-backward var(--navigation-indicator-speed) linear;
+  animation:
+    point-back var(--navigation-indicator-arrival) linear,
+    notch-back var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
 }
 
-@keyframes shape-backward {
-  0% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
-  30% { --ax-edge-left-depth: 9px; --ax-edge-right-depth: 0px; }
-  50% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: -7px; }
-  75% { --ax-edge-right-depth: 0px; }
-  100% { --ax-edge-left-depth: 0px; --ax-edge-right-depth: 0px; }
-}</pre>
+@keyframes point-back { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: 9px; } 100% { --ax-edge-left-depth: 0px; } }
+@keyframes notch-back { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: -7px; } 100% { --ax-edge-right-depth: 0px; } }</pre>
       </div>
     </section>
 

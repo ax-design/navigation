@@ -127,12 +127,12 @@ attribute, with `forward` or `backward` as its value: forward is toward the end 
 order, which is right in a horizontal navigation and down in a vertical one. The attribute goes
 away when the indicator arrives, and an interrupted movement starts it over.
 
-A movement lasts `--navigation-indicator-speed`, so a transition on a shape property that starts
-when the mark appears ends after the indicator has landed. An animation of that length runs with
-the movement instead. A movement has two parts: the leading end reaches the item at 30% of the
-speed and the trailing end follows until the end. A feature grows while the end that carries it
-travels, and is back to a plain side before the bar settles, so the last part of a movement only
-moves.
+A movement is two parts, and the element writes how long each takes:
+`--navigation-indicator-arrival` is the time the leading end takes to reach the item and
+`--navigation-indicator-follow` the time the trailing end takes to follow it. An animation can be
+given the length of the part whose end carries its feature, so that feature grows and shrinks
+inside that part and the end lands plain. A transition cannot do it: it starts when the mark
+appears and therefore ends after the indicator has landed.
 
 ```css
 ax-navigation {
@@ -143,16 +143,13 @@ ax-navigation {
 }
 
 ax-navigation[moving="forward"] {
-  animation: sharpen var(--navigation-indicator-speed) linear;
+  animation:
+    point var(--navigation-indicator-arrival) linear,
+    notch var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
 }
 
-@keyframes sharpen {
-  0% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
-  30% { --ax-edge-right-depth: 9px; --ax-edge-left-depth: 0px; }
-  50% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: -7px; }
-  75% { --ax-edge-left-depth: 0px; }
-  100% { --ax-edge-right-depth: 0px; --ax-edge-left-depth: 0px; }
-}
+@keyframes point { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: 9px; } 100% { --ax-edge-right-depth: 0px; } }
+@keyframes notch { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: -7px; } 100% { --ax-edge-left-depth: 0px; } }
 ```
 
 ## Events
