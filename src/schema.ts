@@ -42,6 +42,8 @@ export const SPEED_PROPERTY = {
 // they are written here, not read, and the change detector does not watch them.
 export const ARRIVAL_PROPERTY = '--navigation-indicator-arrival';
 export const FOLLOW_PROPERTY = '--navigation-indicator-follow';
+export const LEAD_PROPERTY = '--navigation-indicator-lead';
+export const TRAIL_PROPERTY = '--navigation-indicator-trail';
 
 export const WINDOW_PROPERTIES = [
     {
@@ -54,6 +56,22 @@ export const WINDOW_PROPERTIES = [
         name: FOLLOW_PROPERTY,
         syntax: '<time>',
         initialValue: '0ms',
+        inherits: true,
+    },
+    // How far each end is deformed while it travels: 0 while it stands, 1 at the middle of its
+    // travel, 0 when it arrives. Numbers rather than an animation, because a feature shaped from
+    // them with calc() is drawn by the browser in every engine: an animation of a custom property
+    // is applied in steps unless CSS.registerProperty registered it.
+    {
+        name: LEAD_PROPERTY,
+        syntax: '<number>',
+        initialValue: '0',
+        inherits: true,
+    },
+    {
+        name: TRAIL_PROPERTY,
+        syntax: '<number>',
+        initialValue: '0',
         inherits: true,
     },
 ];

@@ -4,7 +4,15 @@ import type { PropertyValue } from '@ax-design/typed-om';
 import { Values, shapeSpecFrom } from '@ax-design/surface/schema';
 import { resolve, traceContour } from '@ax-design/shape';
 import { AxNavigation, AxNavigationItem } from './CustomElements.js';
-import { ARRIVAL_PROPERTY, FOLLOW_PROPERTY, NAVIGATION_PROPERTIES, PAD_INNER, PAD_OUTER } from './schema.js';
+import {
+    ARRIVAL_PROPERTY,
+    FOLLOW_PROPERTY,
+    LEAD_PROPERTY,
+    NAVIGATION_PROPERTIES,
+    PAD_INNER,
+    PAD_OUTER,
+    TRAIL_PROPERTY,
+} from './schema.js';
 import { along, directionOf, matrix } from './bar.js';
 import type { Along, Box, Direction } from './bar.js';
 
@@ -125,6 +133,7 @@ class IndicatorManager {
         this.$from = this.$container.currentItem;
         this.$to = undefined;
         this.markMoving(null);
+        this.clearBells();
     }
 
     // Paints the bar of the current item, coalesced to one frame. Skipped while a movement owns
@@ -185,6 +194,7 @@ class IndicatorManager {
         this.cancelRest();
         this.stopFollow();
         this.markMoving(null);
+        this.clearBells();
         this.requestRest();
     }
 
@@ -259,6 +269,18 @@ class IndicatorManager {
         this.$container.style.setProperty(name, text);
     }
 
+    // The deformation of one end of the movement: greatest half way through the travel of that
+    // end, zero while it stands and when it has arrived.
+    private setBell(name: string, value: number): void {
+        const text = String(Math.round(value * 1000) / 1000);
+        if (this.$container.style.getPropertyValue(name) !== text) this.$container.style.setProperty(name, text);
+    }
+
+    private clearBells(): void {
+        this.setBell(LEAD_PROPERTY, 0);
+        this.setBell(TRAIL_PROPERTY, 0);
+    }
+
     private styleNow(): IndicatorStyle {
         return (this.style = this.readStyle());
     }
@@ -317,12 +339,20 @@ class IndicatorManager {
         this.frameHandle = null;
         if (!this.$from || !this.$to) {
             this.markMoving(null);
+            this.clearBells();
             return;
         }
         if (this.animationStartTime === null) this.animationStartTime = time;
         const style = this.style || this.styleNow();
-        // A shape can be animated in CSS while the indicator runs, so its numbers are read again
-        // on every frame. The margins, the direction and the color come from the style.
+        const progress = (time - this.animationStartTime) / style.speed;
+        const grow = progress < animationBreakPoint ? growAnimationFn(progress / animationBreakPoint) : 1;
+        const cut = progress > animationBreakPoint ? cutAnimationFn((progress - animationBreakPoint) / (1 - animationBreakPoint)) : 0;
+        // The two ends as deformations a style can shape a feature with. Each is zero once its end
+        // has arrived, so an end lands plain. They are written before the shape is read, so the
+        // frame draws the deformation of the frame it belongs to.
+        this.setBell(LEAD_PROPERTY, 4 * grow * (1 - grow));
+        this.setBell(TRAIL_PROPERTY, 4 * cut * (1 - cut));
+        // The shape numbers are read again on every frame, because a style can shape them.
         this.values.values = this.binding.read();
         const thickness = Math.max(0, this.readNumber('--navigation-indicator-width', style.thickness));
         const canvasBox = this.$container.canvas.getBoundingClientRect();
@@ -334,9 +364,6 @@ class IndicatorManager {
         // The drawn bar decides the direction, which is not the same as from-to when a movement
         // was interrupted behind its target.
         this.markMoving(reverse ? 'backward' : 'forward');
-        const progress = (time - this.animationStartTime) / style.speed;
-        const grow = progress < animationBreakPoint ? growAnimationFn(progress / animationBreakPoint) : 1;
-        const cut = progress > animationBreakPoint ? cutAnimationFn((progress - animationBreakPoint) / (1 - animationBreakPoint)) : 0;
         // The leading end extends first (grow) and the trailing end follows (cut). Moving forward
         // the leading end is the far one, moving backward it is the near one.
         const lo = reverse

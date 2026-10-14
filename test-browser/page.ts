@@ -207,7 +207,7 @@ async function run() {
         const text = getComputedStyle(anim).getPropertyValue(name).trim();
         return text.endsWith('ms') ? parseFloat(text) : parseFloat(text) * 1000;
     };
-    const lengthPx = (name: string) => parseFloat(getComputedStyle(anim).getPropertyValue(name)) || 0;
+    const computedNumber = (name: string) => parseFloat(getComputedStyle(anim).getPropertyValue(name)) || 0;
     const arrival = timeMs('--navigation-indicator-arrival');
     const follow = timeMs('--navigation-indicator-follow');
     check(
@@ -220,12 +220,15 @@ async function run() {
     // which is still on its way, so it never reaches past the target's far edge.
     const twoRight = animTwo.getBoundingClientRect().right - animBox.left;
     let pointOut = 0;
+    let leadPeak = 0;
     let pointClearAtArrival = true;
     const started = performance.now();
     for (let i = 0; i < 40; i++) {
         await frames(1);
         const t = performance.now() - started;
-        const depth = lengthPx('--ax-edge-right-depth');
+        const depth = computedNumber('--ax-edge-right-depth');
+        const lead = computedNumber('--navigation-indicator-lead');
+        if (lead > leadPeak) leadPeak = lead;
         if (t < arrival - 25) {
             if (depth > pointOut) pointOut = depth;
         } else if (t >= arrival) {
@@ -234,6 +237,7 @@ async function run() {
         }
     }
     check('the point is out while the leading end travels', pointOut > 4, 'longest ' + pointOut.toFixed(1) + 'px');
+    check('the leading end publishes its deformation', leadPeak > 0.6, 'peak ' + leadPeak.toFixed(2));
     check(
         'the point is gone when the leading end lands',
         pointClearAtArrival,
@@ -248,6 +252,11 @@ async function run() {
         backAtLanding = painted(anim).right <= twoRight + 3;
     }
     check('the bar is plain when it lands', backAtLanding);
+    check(
+        'the deformation of an end is zero while it stands',
+        computedNumber('--navigation-indicator-lead') === 0 && computedNumber('--navigation-indicator-trail') === 0,
+        'lead ' + computedNumber('--navigation-indicator-lead') + ', trail ' + computedNumber('--navigation-indicator-trail')
+    );
 
     // Interrupting starts the movement over, and the animation on it starts over with it.
     animThree.click();
@@ -257,7 +266,7 @@ async function run() {
     const afterInterrupt = painted(anim);
     const oneLeft = animOne.getBoundingClientRect().left - animBox.left;
     check('the direction follows an interrupted movement', anim.getAttribute('moving') === 'backward', 'moving=' + anim.getAttribute('moving'));
-    const pointAfterInterrupt = lengthPx('--ax-edge-left-depth');
+    const pointAfterInterrupt = computedNumber('--ax-edge-left-depth');
     check(
         'the point is out again after a movement was interrupted',
         pointAfterInterrupt > 4,

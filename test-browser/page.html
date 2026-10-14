@@ -9,24 +9,21 @@
     .custom-color { --navigation-indicator-color: red; }
     .custom-width { --navigation-indicator-width: 6px; }
     .custom-speed { --navigation-indicator-speed: 100ms; }
-    /* Each end carries a feature that is gone by the time that end arrives. */
+    /* A feature is shaped from the deformation of its own end, so it is gone when that end
+       arrives. The shape is read every frame, with no animation of a custom property. */
     .animated-shape {
       --navigation-indicator-speed: 600ms;
       --ax-edge-right-kind: triangle;
       --ax-edge-right-span: 100%;
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
-    }
-    .animated-shape[moving="forward"] {
-      animation: test-point-forward var(--navigation-indicator-arrival) linear, test-notch-forward var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
+      --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+      --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
     }
     .animated-shape[moving="backward"] {
-      animation: test-point-backward var(--navigation-indicator-arrival) linear, test-notch-backward var(--navigation-indicator-follow) linear var(--navigation-indicator-arrival);
+      --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+      --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
     }
-    @keyframes test-point-forward { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: 9px; } 100% { --ax-edge-right-depth: 0px; } }
-    @keyframes test-notch-forward { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: -7px; } 100% { --ax-edge-left-depth: 0px; } }
-    @keyframes test-point-backward { 0% { --ax-edge-left-depth: 0px; } 50% { --ax-edge-left-depth: 9px; } 100% { --ax-edge-left-depth: 0px; } }
-    @keyframes test-notch-backward { 0% { --ax-edge-right-depth: 0px; } 50% { --ax-edge-right-depth: -7px; } 100% { --ax-edge-right-depth: 0px; } }
   </style>
 </head>
 <body>
