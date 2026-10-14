@@ -82,12 +82,15 @@
       --ax-edge-right-span: 100%;
       --ax-edge-left-kind: triangle;
       --ax-edge-left-span: 100%;
-      --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
-      --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+      /* Full depth over the middle of each end, tapering at both ends. */
+      --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
+      --trail: min(var(--navigation-indicator-trail, 0) * 2.5, 1, (1 - var(--navigation-indicator-trail, 0)) * 2.5);
+      --ax-edge-right-depth: calc(var(--lead) * 9px);
+      --ax-edge-left-depth: calc(var(--trail) * -7px);
     }
     .shape-animated[moving="backward"] {
-      --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
-      --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+      --ax-edge-right-depth: calc(var(--trail) * -7px);
+      --ax-edge-left-depth: calc(var(--lead) * 9px);
     }
     .shape-lean {
       --ax-corner-top-left-shift-x: 10px;
@@ -395,7 +398,7 @@
       </div>
       <div class="code">
         <h2>Animated Indicator</h2>
-        <p>The element carries <code>moving</code>, forward or backward, while the indicator runs, and how far each end is deformed while it travels. A feature shaped from that with <code>calc()</code> is drawn every frame and is gone when its end arrives.</p>
+        <p>The element carries <code>moving</code>, forward or backward, while the indicator runs, and how far each end of the movement is. A feature is shaped over that with <code>calc()</code>, so it gets its own curve and is gone when its end arrives.</p>
         <pre>ax-navigation {
   --navigation-indicator-speed: 900ms;
   --navigation-indicator-width: 14px;
@@ -403,13 +406,17 @@
   --ax-edge-right-span: 100%;
   --ax-edge-left-kind: triangle;
   --ax-edge-left-span: 100%;
-  --ax-edge-right-depth: calc(var(--navigation-indicator-lead, 0) * 9px); /* forward */
-  --ax-edge-left-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
+  /* A curve of the shape, not of the movement: full depth over the middle
+     of each end, tapering at both ends. */
+  --lead: min(var(--navigation-indicator-lead, 0) * 2.5, 1, (1 - var(--navigation-indicator-lead, 0)) * 2.5);
+  --trail: min(var(--navigation-indicator-trail, 0) * 2.5, 1, (1 - var(--navigation-indicator-trail, 0)) * 2.5);
+  --ax-edge-right-depth: calc(var(--lead) * 9px);
+  --ax-edge-left-depth: calc(var(--trail) * -7px);
 }
 
 ax-navigation[moving="backward"] {
-  --ax-edge-right-depth: calc(var(--navigation-indicator-trail, 0) * -7px);
-  --ax-edge-left-depth: calc(var(--navigation-indicator-lead, 0) * 9px);
+  --ax-edge-right-depth: calc(var(--trail) * -7px);
+  --ax-edge-left-depth: calc(var(--lead) * 9px);
 }</pre>
       </div>
     </section>
