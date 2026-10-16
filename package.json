@@ -1,6 +1,6 @@
 {
     "name": "@ax-design/navigation",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Web component that implement Navigation Indicator animation of Axiom Design System.",
     "main": "build/main.js",
     "module": "es/index.js",
