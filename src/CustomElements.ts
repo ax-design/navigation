@@ -15,6 +15,14 @@ export class AxNavigation extends HTMLElement {
     private $currentItem?: AxNavigationItem;
     private resizeObserver: ResizeObserver | null = null;
     private $slot: HTMLSlotElement | null = null;
+    // The inner box, not the host, is what sizes and positions the canvas. The host is often
+    // display: inline, an element whose observed box does not follow the layout, so it cannot be
+    // the only thing watched.
+    private $in!: HTMLDivElement;
+
+    // The window resizes even when neither watched box does: the page can reflow around the
+    // element, and a browser zoom changes the device pixel ratio the canvas is sized by.
+    private onWindowResize = () => this.indicatorManager.requestRest();
 
     // Only the first arrival matters: a later change must not take the highlight away from the
     // item the user selected.
@@ -80,15 +88,22 @@ export class AxNavigation extends HTMLElement {
         }
         this.resolveCurrentItem();
         // The detector reports style changes, including one report right after attaching; the
-        // resize observer catches the layout changes the detector cannot see.
+        // resize observer catches the layout changes the detector cannot see. The inner box is
+        // watched besides the host, because the host can be inline and never report a change
+        // while the bar the canvas is laid out on does.
         this.indicatorManager.observe();
-        this.resizeObserver = new ResizeObserver(() => this.indicatorManager.requestRest());
-        this.resizeObserver.observe(this);
+        if (!this.resizeObserver) {
+            this.resizeObserver = new ResizeObserver(() => this.indicatorManager.requestRest());
+            this.resizeObserver.observe(this);
+            this.resizeObserver.observe(this.$in);
+        }
+        window.addEventListener('resize', this.onWindowResize);
         this.indicatorManager.requestRest();
     }
 
     disconnectedCallback() {
         this.removeEventListener('click', this.handleClick);
+        window.removeEventListener('resize', this.onWindowResize);
         this.indicatorManager.unobserve();
         if (this.resizeObserver) {
             this.resizeObserver.disconnect();
@@ -136,6 +151,7 @@ export class AxNavigation extends HTMLElement {
         ].join('\n');
         this.canvas = this.root.querySelector('canvas')!;
         this.ctx = this.canvas.getContext('2d')!;
+        this.$in = this.root.querySelector('#in')!;
         defaultItem = this.querySelector(AxNavigationItem.ElementName + '[default]') as AxNavigationItem | null;
         this.$currentItem = defaultItem || (this.querySelector(AxNavigationItem.ElementName) as AxNavigationItem | null) || undefined;
         this.indicatorManager = new IndicatorManager(this);
