@@ -69,6 +69,8 @@ export class AxNavigation extends HTMLElement {
     private $in!: HTMLDivElement;
     private $items!: HTMLElement;
     private warnedNone = false;
+    // Enter was pressed on a link of an item: the click the browser makes of it is the keyboard's.
+    private enterOnLink = false;
 
     // The window resizes even when neither watched box does: the page can reflow around the
     // element, and a browser zoom changes the device pixel ratio the canvas is sized by.
@@ -151,7 +153,7 @@ export class AxNavigation extends HTMLElement {
         if (!item || item === from || item.hasAttribute('disabled') || this.items().indexOf(item) < 0) return false;
         this.indicatorManager.switch(from, item);
         this.$currentItem = item;
-        this.$roving = item;
+        this.$roving = undefined;
         this.applySemantics();
         this.dispatchEvent(new CustomEvent('switch', { detail: { from, to: item, reason } }));
         return true;
@@ -162,7 +164,8 @@ export class AxNavigation extends HTMLElement {
         (link || item).focus();
     }
 
-    // The Tab stop: the item focus last moved to, else the current item, else the first enabled one.
+    // The Tab stop: the item the arrows moved focus to while focus is in the tabs, else the current
+    // item, else the first enabled one.
     private rovingItem(items: AxNavigationItem[], current: AxNavigationItem | undefined): AxNavigationItem | undefined {
         const usable = (item: AxNavigationItem | undefined) =>
             !!item && items.indexOf(item) >= 0 && !item.hasAttribute('disabled');
@@ -209,8 +212,10 @@ export class AxNavigation extends HTMLElement {
     // Moves focus along the items, and selects too when the navigation follows its focus. Only
     // the keys of the navigation's own items are handled, so a widget inside an item keeps them.
     private handleKeyDown = (event: KeyboardEvent) => {
+        const origin = event.composedPath()[0] as Element | undefined;
+        this.enterOnLink = event.key === 'Enter' && !!origin && origin.localName === 'a' && !!origin.closest(AxNavigationItem.ElementName);
         if (event.altKey || event.ctrlKey || event.metaKey) return;
-        const source = event.composedPath()[0] as Element | undefined;
+        const source = origin;
         if (!source || source.localName !== AxNavigationItem.ElementName) return;
         if (source.closest(AxNavigation.ElementName) !== this) return;
         if (this.effectiveMode !== 'tabs') return;
@@ -254,9 +259,22 @@ export class AxNavigation extends HTMLElement {
         const $target = event.target as HTMLElement;
         const $item = $target.closest(AxNavigationItem.ElementName) as AxNavigationItem;
 
+        const keyboard = this.enterOnLink;
+        this.enterOnLink = false;
         if (!$item) return;
         if ($item.container !== this) return;
-        this.commit($item, 'pointer');
+        this.commit($item, keyboard ? 'keyboard' : 'pointer');
+    };
+
+    // The Tab stop follows the arrows while focus is in the tabs, so Tab leaves from where the
+    // focus is. Once focus has left, it goes back to the current item, so coming back with Tab
+    // lands there, as in WinUI and the tabs pattern of WAI-ARIA.
+    private handleFocusOut = (event: FocusEvent) => {
+        const next = event.relatedTarget as Node | null;
+        if (next && this.contains(next)) return;
+        if (!this.$roving) return;
+        this.$roving = undefined;
+        this.applySemantics();
     };
 
     // Vertical and horizontal swap the canvas box and the canonical bar space, so the indicator
@@ -279,6 +297,7 @@ export class AxNavigation extends HTMLElement {
         }
         this.addEventListener('click', this.handleClick);
         this.addEventListener('keydown', this.handleKeyDown);
+        this.addEventListener('focusout', this.handleFocusOut);
         if (!this.$slot) {
             this.$slot = this.root.querySelector('slot');
             if (this.$slot) this.$slot.addEventListener('slotchange', this.onChildrenChange);
@@ -308,6 +327,7 @@ export class AxNavigation extends HTMLElement {
     disconnectedCallback() {
         this.removeEventListener('click', this.handleClick);
         this.removeEventListener('keydown', this.handleKeyDown);
+        this.removeEventListener('focusout', this.handleFocusOut);
         this.observer.disconnect();
         window.removeEventListener('resize', this.onWindowResize);
         this.indicatorManager.unobserve();

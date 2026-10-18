@@ -352,6 +352,14 @@ async function keyboardChecks() {
     await press('Shift+Tab');
     check('keyboard: Shift+Tab returns to the Tab stop', document.activeElement === t3, activeId());
 
+    // The Tab stop follows the arrows while focus is inside, and goes back to the current item
+    // once focus leaves: arrow away from the current item, leave, and come back.
+    await press('Home');
+    await press('Tab');
+    check('keyboard: Tab leaves from the item the arrows reached', document.activeElement === after, activeId());
+    await press('Shift+Tab');
+    check('keyboard: coming back lands on the current item, not the last focused one', document.activeElement === t3 && tabs.currentItem === t3, activeId());
+
     // Modified keys are the browser's, and keys pressed outside the navigation are not ours.
     await press('Control+ArrowLeft');
     check('keyboard: a key with Control is left alone', document.activeElement === t3 && !lastPrevented, activeId());
@@ -405,6 +413,11 @@ async function keyboardChecks() {
         ''
     );
     check('links: a click switches with reason pointer', linkLog.length === 1 && linkLog[0].reason === 'pointer', JSON.stringify(linkLog));
+    // Enter on a link makes the browser click it: that switch is the keyboard's.
+    $el('l1a').focus();
+    await press('Enter');
+    await frames(3);
+    check('links: Enter on a link switches with reason keyboard', linkLog.length === 2 && linkLog[1].reason === 'keyboard' && attr($el('l1a'), 'aria-current') === 'page', JSON.stringify(linkLog));
 
     // selection-follows-focus: the arrow selects, with reason keyboard.
     const follow = $nav('nav-follow');
