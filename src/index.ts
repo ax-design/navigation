@@ -4,6 +4,7 @@ import { AxNavigation, AxNavigationItem } from './CustomElements.js';
 import { NAVIGATION_PROPERTIES, SPEED_PROPERTY, WINDOW_PROPERTIES } from './schema.js';
 
 export { AxNavigation, AxNavigationItem } from './CustomElements.js';
+export type { NavigationMode, SwitchReason } from './CustomElements.js';
 export { NAVIGATION_PROPERTIES, SPEED_PROPERTY, WINDOW_PROPERTIES } from './schema.js';
 
 let registered = false;

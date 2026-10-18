@@ -20,15 +20,24 @@ const server = Bun.serve({
 interface Driver {
     eval<T>(script: string): Promise<T>;
     close(): Promise<void>;
+    // Playwright only: a real key press, and the accessibility snapshot of an element.
+    key?(key: string): Promise<void>;
+    snapshot?(selector: string): Promise<string>;
 }
 
 async function playwright(name: string, url: string): Promise<Driver> {
     const pw = (await import('playwright')) as any;
-    const browser = await pw[name].launch();
+    // AX_BROWSER_PATH points the run at a system build instead.
+    const executablePath = process.env.AX_BROWSER_PATH;
+    const browser = await pw[name].launch(executablePath ? { executablePath } : {});
     const page = await browser.newPage({ viewport: { width: 700, height: 900 } });
     await page.goto(url);
+    // Playwright builds without an aria snapshot skip the check that needs one.
+    const hasSnapshot = typeof page.locator('body').ariaSnapshot === 'function';
     return {
         eval: (script) => page.evaluate(script),
+        key: (key) => page.keyboard.press(key),
+        snapshot: hasSnapshot ? (selector) => page.locator(selector).ariaSnapshot() : undefined,
         close: () => browser.close(),
     };
 }
@@ -55,11 +64,31 @@ async function safari(url: string): Promise<Driver> {
     };
 }
 
+// The page asks for steps the driver can take with a real browser: key presses and snapshots.
+// Each step is acknowledged, whether or not this driver can take it, so the page never waits on
+// a browser that cannot.
 async function drive(d: Driver) {
     for (;;) {
-        const state = await d.eval<{ result: any }>('({ result: window.__result || null })');
+        const state = await d.eval<{ result: any; step: string; ack: string }>('({ result: window.__result || null, step: window.__step || "", ack: window.__ack || "" })');
         if (state.result) return state.result;
-        await Bun.sleep(50);
+        if (state.step && state.step !== state.ack) {
+            if (state.step.startsWith('caps?')) {
+                await d.eval(`(window.__caps = ${JSON.stringify({ keys: !!d.key, snapshot: !!d.snapshot })})`);
+            } else if (state.step.startsWith('key:')) {
+                // key:Tab#3 presses Tab; the number only keeps a repeated step distinct.
+                const key = state.step.slice('key:'.length).split('#')[0];
+                if (d.key) await d.key(key);
+            } else if (state.step.startsWith('snap:')) {
+                // snap:nav-tabs#4 leaves the snapshot of #nav-tabs in window.__snapshot.
+                const id = state.step.slice('snap:'.length).split('#')[0];
+                if (d.snapshot) {
+                    const text = await d.snapshot('#' + id);
+                    await d.eval(`(window.__snapshot = ${JSON.stringify(text)})`);
+                }
+            }
+            await d.eval(`(window.__ack = ${JSON.stringify(state.step)})`);
+        }
+        await Bun.sleep(20);
     }
 }
 

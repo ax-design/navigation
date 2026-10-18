@@ -38,6 +38,54 @@
     <ax-navigation-item id="vitem2">Second</ax-navigation-item>
   </ax-navigation>
 
+  <button id="before-tabs">Before tabs</button>
+  <ax-navigation id="nav-tabs" aria-label="Sections">
+    <ax-navigation-item id="t1" default>Alpha</ax-navigation-item>
+    <ax-navigation-item id="t2" disabled>Beta</ax-navigation-item>
+    <ax-navigation-item id="t3">Gamma</ax-navigation-item>
+  </ax-navigation>
+  <button id="after-tabs">After tabs</button>
+
+  <ax-navigation id="nav-links" aria-label="Site sections">
+    <ax-navigation-item id="l1" default><a href="#alpha" id="l1a">Alpha</a></ax-navigation-item>
+    <ax-navigation-item id="l2"><a href="#beta" id="l2a">Beta</a></ax-navigation-item>
+    <ax-navigation-item id="l3"><a href="#gamma" id="l3a">Gamma</a></ax-navigation-item>
+  </ax-navigation>
+
+  <ax-navigation id="nav-vertical-tabs" vertical>
+    <ax-navigation-item id="v1">One</ax-navigation-item>
+    <ax-navigation-item id="v2">Two</ax-navigation-item>
+    <ax-navigation-item id="v3">Three</ax-navigation-item>
+  </ax-navigation>
+
+  <ax-navigation id="nav-rtl" dir="rtl">
+    <ax-navigation-item id="r1">Uno</ax-navigation-item>
+    <ax-navigation-item id="r2">Dos</ax-navigation-item>
+    <ax-navigation-item id="r3">Tres</ax-navigation-item>
+  </ax-navigation>
+
+  <ax-navigation id="nav-follow" selection-follows-focus>
+    <ax-navigation-item id="s1">Red</ax-navigation-item>
+    <ax-navigation-item id="s2">Green</ax-navigation-item>
+    <ax-navigation-item id="s3">Blue</ax-navigation-item>
+  </ax-navigation>
+
+  <ax-navigation id="nav-button">
+    <ax-navigation-item id="b1"><button id="b1-button">Open</button></ax-navigation-item>
+    <ax-navigation-item id="b2"><button>Close</button></ax-navigation-item>
+  </ax-navigation>
+
+  <ax-navigation id="nav-input">
+    <ax-navigation-item id="n1">Left</ax-navigation-item>
+    <ax-navigation-item id="n2">Right</ax-navigation-item>
+    <input id="nav-field" aria-label="Filter">
+  </ax-navigation>
+
+  <ax-navigation id="nav-authored" role="menubar" aria-label="Tools">
+    <ax-navigation-item id="a1" role="menuitem" aria-label="Open file">Open</ax-navigation-item>
+    <ax-navigation-item id="a2" role="menuitem" aria-label="Save file">Save</ax-navigation-item>
+  </ax-navigation>
+
   <script type="module" src="./page.ts"></script>
 </body>
 </html>
