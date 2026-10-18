@@ -112,7 +112,7 @@ and they are ignored with Alt, Ctrl or Meta held.
 
 | Key | Action |
 | --- | --- |
-| Tab, Shift+Tab | Enter or leave the navigation at its one Tab stop: the current item, or the item focus last moved to. |
+| Tab, Shift+Tab | Enter the navigation on the current item; leave it from wherever the arrows moved focus. |
 | ArrowRight, ArrowLeft | In a horizontal navigation, move focus to the next or previous enabled item. Swapped when the element is right to left. |
 | ArrowDown, ArrowUp | The same in a vertical navigation. |
 | Home, End | Move focus to the first or last enabled item. |
@@ -275,4 +275,4 @@ ax-navigation[moving="backward"] {
 * **`SwitchEvent.detail.from`:** The highlighted element before user switched the tab;
 * **`SwitchEvent.detail.to`:** The highlighted element after user switched the tab;
 * **`SwitchEvent.detail.reason`:** Why it switched: `'pointer'` for a click, `'keyboard'` for the
-  keys, or `'api'` for `select()` and the `currentItem` setter.
+  keys (Enter on a link included), or `'api'` for `select()` and the `currentItem` setter.
