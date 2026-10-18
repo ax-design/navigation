@@ -61,6 +61,99 @@ register();
 </ax-navigation>
 ```
 
+## Keyboard and screen readers
+
+An `ax-navigation` gives its items the roles and states that a navigation or a tab list has, and
+it handles the keys that go with them. Which of the three it uses is set by the `mode` attribute:
+
+* **`links`**: some item holds a link (`a[href]`). The host is a `navigation`, the items are list
+  items, and the link of the current item has `aria-current="page"`. No keys are added: Tab moves
+  between the links and Enter follows one.
+* **`tabs`**: nothing in an item can take focus. The host is a `tablist` with an
+  `aria-orientation`, and the items are `tab`s with `aria-selected`. Only one item is in the Tab
+  order, and the arrow keys move between the items (see the keys below).
+* **`none`**: some item holds controls of its own, such as a button. The items keep their own
+  semantics and get no keys. The element logs a warning once, which suggests setting `mode`.
+
+Without a `mode` attribute, the mode is detected from the items: `links` if an item has a link,
+else `none` if an item holds a control, else `tabs`. It is detected again whenever the items
+change. Setting `mode` to `links`, `tabs` or `none` chooses it; any other value detects it. The
+mode in use is read from the `effectiveMode` property.
+
+Links example. The label names the `navigation` landmark, so a page with several can tell them apart:
+
+```html
+<ax-navigation aria-label="Site sections">
+  <ax-navigation-item default><a href="/">Home</a></ax-navigation-item>
+  <ax-navigation-item><a href="/apps">Apps</a></ax-navigation-item>
+</ax-navigation>
+```
+
+Tabs example. Panels are not managed by the element: the author points each item at its panel with
+`aria-controls`, and shows the panel in a `switch` listener:
+
+```html
+<ax-navigation aria-label="Settings" id="settings">
+  <ax-navigation-item id="tab-general" aria-controls="panel-general">General</ax-navigation-item>
+  <ax-navigation-item id="tab-privacy" aria-controls="panel-privacy">Privacy</ax-navigation-item>
+</ax-navigation>
+<div id="panel-general" role="tabpanel" aria-labelledby="tab-general">...</div>
+<div id="panel-privacy" role="tabpanel" aria-labelledby="tab-privacy" hidden>...</div>
+<script>
+  document.getElementById('settings').addEventListener('switch', (e) => {
+    document.getElementById('panel-general').hidden = e.detail.to.id !== 'tab-general';
+    document.getElementById('panel-privacy').hidden = e.detail.to.id !== 'tab-privacy';
+  });
+</script>
+```
+
+Keys in `tabs` mode. The keys are handled only when the focus is on an item of this navigation,
+and they are ignored with Alt, Ctrl or Meta held.
+
+| Key | Action |
+| --- | --- |
+| Tab, Shift+Tab | Enter or leave the navigation at its one Tab stop: the current item, or the item focus last moved to. |
+| ArrowRight, ArrowLeft | In a horizontal navigation, move focus to the next or previous enabled item. Swapped when the element is right to left. |
+| ArrowDown, ArrowUp | The same in a vertical navigation. |
+| Home, End | Move focus to the first or last enabled item. |
+| Enter, Space | Select the focused item. |
+
+The end of the list is not wrapped: an arrow at the last item does nothing. The arrows, Home and
+End only move focus. Space does not scroll the page while the navigation has the focus.
+
+Moving focus does not select, unless the navigation has the boolean `selection-follows-focus`
+attribute: then the arrows, Home and End select the item they move to.
+
+An item with the boolean `disabled` attribute is skipped by the keys and ignores clicks. In `tabs`
+mode it is `aria-disabled`, and out of the Tab order.
+
+The `current` attribute is written on the current item in every mode, for styling it
+(`ax-navigation-item[current]`). Setting it yourself does not select the item; the initial
+selection still comes from `default`.
+
+Selection from code:
+
+```js
+const nav = document.querySelector('ax-navigation');
+nav.select(nav.querySelectorAll('ax-navigation-item')[2], { focus: true }); // true if it changed
+nav.currentItem = item; // the same as select(item)
+```
+
+`select()` returns `false`, and does nothing, when the item is disabled, is already current, or is
+not an item of this navigation. With `focus: true` it moves focus to the item, or to its link in
+`links` mode.
+
+The component writes its roles and states as attributes, and never over an attribute the author
+has set: if an author attribute is there, or the author has changed one the component wrote, the
+author's value is kept, and the component stops writing it.
+
+### Changes
+
+* Plain text items are now focusable tabs, with the keys above. Before, items reacted only to
+  clicks. Use `mode="none"` for the old behaviour.
+* The `nav` landmark inside the shadow root is gone. It is a `div` with the items in it, which is
+  a `list` only in `links` mode, where the host is the `navigation` landmark.
+
 ## Style Controlling
 
 Navigation component uses custom properties to manage the style of the navigation indicator.
@@ -180,4 +273,6 @@ ax-navigation[moving="backward"] {
 **Properties:**
 
 * **`SwitchEvent.detail.from`:** The highlighted element before user switched the tab;
-* **`SwitchEvent.detail.to`:** The highlighted element after user switched the tab.
+* **`SwitchEvent.detail.to`:** The highlighted element after user switched the tab;
+* **`SwitchEvent.detail.reason`:** Why it switched: `'pointer'` for a click, `'keyboard'` for the
+  keys, or `'api'` for `select()` and the `currentItem` setter.
