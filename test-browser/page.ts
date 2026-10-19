@@ -557,6 +557,61 @@ async function motionChecks() {
     moving.remove();
 }
 
+// The most solid pixel across the bar, at its middle. A bar that sits between device pixels can
+// be partly covered in every row, so the most solid one is not always fully opaque.
+function pixelAtIndicator(nav: AxNavigation): number[] {
+    const bar = painted(nav);
+    const dpr = window.devicePixelRatio || 1;
+    const x = Math.floor(((bar.left + bar.right) / 2) * dpr);
+    const y0 = Math.floor(bar.top * dpr);
+    const rows = Math.ceil(bar.bottom * dpr) - y0;
+    const data = nav.ctx.getImageData(x, y0, 1, rows).data;
+    let best = [0, 0, 0, 0];
+    for (let i = 0; i < rows; i++) {
+        const pixel = Array.from(data.slice(i * 4, i * 4 + 4));
+        if (pixel[3] > best[3]) best = pixel;
+    }
+    return best;
+}
+
+// Forced colors: a canvas is not recolored by the browser, so the indicator is painted with the
+// system Highlight color, and goes back to its own color when the mode ends.
+async function colorChecks() {
+    await emulate('no-preference', 'active');
+    // The system color as a style resolves it: Highlight, left to the forced palette.
+    const probe = document.createElement('span');
+    probe.style.setProperty('color', 'Highlight');
+    probe.style.setProperty('forced-color-adjust', 'none');
+    document.body.appendChild(probe);
+    await frames(2);
+    const highlight = (getComputedStyle(probe).color.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    probe.remove();
+
+    const nav = makeNav();
+    nav.style.setProperty('--navigation-indicator-color', 'rgb(0, 255, 0)');
+    await frames(8);
+    // Canvas rounds the color of a partly covered pixel by a unit or two, so the channels are
+    // compared with a small tolerance. The color is far from the green of the indicator color.
+    const same = (pixel: number[], rgb: number[]) =>
+        pixel[3] > 0 && pixel.slice(0, 3).every((value, i) => Math.abs(value - rgb[i]) <= 2);
+    const forced = pixelAtIndicator(nav);
+    check(
+        'forced colors: the indicator is painted with the system Highlight color',
+        same(forced, highlight),
+        'pixel ' + forced.join(',') + ', Highlight ' + highlight.join(',')
+    );
+
+    await emulate('no-preference', 'none');
+    await frames(3);
+    const back = pixelAtIndicator(nav);
+    check(
+        'forced colors: the indicator goes back to its own color when they end',
+        same(back, [0, 255, 0]),
+        'pixel ' + back.join(',')
+    );
+    nav.remove();
+}
+
 async function run() {
     register();
     register(); // idempotent check
@@ -764,6 +819,7 @@ async function run() {
     const caps = await capabilities();
     if (caps.emulate) {
         await motionChecks();
+        await colorChecks();
     }
 
     await modeChecks();

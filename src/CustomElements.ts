@@ -57,6 +57,9 @@ export class AxNavigation extends HTMLElement {
     public root = this.attachShadow({ mode: 'open' });
     public canvas: HTMLCanvasElement;
     public ctx: CanvasRenderingContext2D;
+    // Hidden, and styled Highlight: its computed color is the system color of the indicator in
+    // forced colors, which a canvas cannot take as a keyword.
+    public highlightProbe: HTMLElement;
     private indicatorManager!: IndicatorManager;
     private $currentItem?: AxNavigationItem;
     // The item the Tab key stops on in tabs mode. Arrow keys move it along with the focus.
@@ -345,6 +348,7 @@ export class AxNavigation extends HTMLElement {
             '<div id="out">',
             '    <div id="in">',
             '        <canvas></canvas>',
+            '        <span id="highlight"></span>',
             '        <div part="items" role="list">',
             '            <slot></slot>',
             '        </div>',
@@ -366,6 +370,8 @@ export class AxNavigation extends HTMLElement {
             '    #out { display: contents; }',
             '    #in { display: block; position: relative; }',
             '    canvas { pointer-events: none; position: absolute; }',
+            // Never shown: it only carries the Highlight color, which forced colors keeps for it.
+            '    #highlight { position: absolute; visibility: hidden; color: Highlight; forced-color-adjust: none; }',
             '    [part="items"] { display: flex; }',
             '    :host([horizontal]) #in { margin-bottom: var(--navigation-private-indicator-outer); }',
             '    :host([vertical]) #in { margin-left: var(--navigation-private-indicator-outer); margin-bottom: auto; }',
@@ -378,6 +384,7 @@ export class AxNavigation extends HTMLElement {
         ].join('\n');
         this.canvas = this.root.querySelector('canvas')!;
         this.ctx = this.canvas.getContext('2d')!;
+        this.highlightProbe = this.root.querySelector('#highlight') as HTMLElement;
         this.$in = this.root.querySelector('#in')!;
         this.$items = this.root.querySelector('[part="items"]') as HTMLElement;
         defaultItem = this.querySelector(AxNavigationItem.ElementName + '[default]') as AxNavigationItem | null;

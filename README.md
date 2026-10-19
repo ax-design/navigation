@@ -174,6 +174,9 @@ Navigation component uses custom properties to manage the style of the navigatio
 
 **Description:** The color of navigation indicator.
 
+In forced colors mode (`forced-colors: active`) the indicator is painted with the system `Highlight`
+color instead, as in WinUI's High Contrast theme, and this property is not used.
+
 ### --navigation-indicator-width
 
 **Type:** `<length>`

@@ -31,6 +31,7 @@ const DEFORM_TRAVEL = 0.85;
 const FOLLOW_HALF = 0.5;
 
 const navigationSchema = new StyleSchema(NAVIGATION_PROPERTIES);
+const FORCED_QUERY = '(forced-colors: active)';
 
 type Moving = 'forward' | 'backward';
 
@@ -76,6 +77,17 @@ function prefersReducedMotion(): boolean {
     return !!query && query.matches;
 }
 
+// Engines before addEventListener on a query only have addListener, so both are tried.
+function listenQuery(query: MediaQueryList, handler: () => void): void {
+    if (typeof query.addEventListener === 'function') query.addEventListener('change', handler);
+    else if (typeof query.addListener === 'function') query.addListener(handler);
+}
+
+function unlistenQuery(query: MediaQueryList, handler: () => void): void {
+    if (typeof query.removeEventListener === 'function') query.removeEventListener('change', handler);
+    else if (typeof query.removeListener === 'function') query.removeListener(handler);
+}
+
 // The margins the canvas keeps on either side of the bar, to 0.01 px, so a resolved bound that
 // carries rounding error does not move the layout.
 function roundPad(value: number): number {
@@ -119,6 +131,13 @@ class IndicatorManager {
     private lastRect: Rect | null;
     private $from?: AxNavigationItem;
     private $to?: AxNavigationItem;
+    // Watched while the element is connected, so the bar is painted again when forced colors start
+    // or end.
+    private forcedQuery: MediaQueryList | null;
+    private readonly onForcedChange = (): void => {
+        this.style = null;
+        this.requestRest();
+    };
 
     constructor($container: AxNavigation) {
         this.$container = $container;
@@ -138,6 +157,7 @@ class IndicatorManager {
         this.fromRect = null;
         this.lastRect = null;
         this.$from = $container.currentItem;
+        this.forcedQuery = null;
     }
 
     // The resting indicator follows style changes. The detector reports them from the shadow
@@ -147,13 +167,40 @@ class IndicatorManager {
             this.style = null;
             this.requestRest();
         });
+        this.watchForced();
     }
 
     // Detaching drops a movement that is in flight: without this the element would come back
     // with an animation that never ends and a mark that never goes away.
     unobserve(): void {
         this.binding.unobserve();
+        this.unwatchForced();
         this.stop();
+    }
+
+    private watchForced(): void {
+        this.unwatchForced();
+        const query = mediaQuery(FORCED_QUERY);
+        if (!query) return;
+        this.forcedQuery = query;
+        listenQuery(query, this.onForcedChange);
+    }
+
+    private unwatchForced(): void {
+        if (!this.forcedQuery) return;
+        unlistenQuery(this.forcedQuery, this.onForcedChange);
+        this.forcedQuery = null;
+    }
+
+    // In forced colors the browser keeps the palette from the page and does not recolor a canvas,
+    // so the bar takes the Highlight color, which only an element with that color can resolve.
+    private indicatorColor(): string {
+        const forced = mediaQuery(FORCED_QUERY);
+        if (forced && forced.matches) {
+            const highlight = getComputedStyle(this.$container.highlightProbe).color;
+            if (highlight) return highlight;
+        }
+        return toCssColor(this.binding.get('--navigation-indicator-color'));
     }
 
     private stop(): void {
@@ -309,7 +356,7 @@ class IndicatorManager {
         this.setPad(PAD_OUTER, padOuter);
         return {
             speed,
-            color: toCssColor(this.binding.get('--navigation-indicator-color')),
+            color: this.indicatorColor(),
             thickness,
             direction,
             padInner,
