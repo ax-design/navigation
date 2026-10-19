@@ -220,6 +220,9 @@ attribute, with `forward` or `backward` as its value: forward is toward the end 
 order, which is right in a horizontal navigation and down in a vertical one. The attribute goes
 away when the indicator arrives, and an interrupted movement starts it over.
 
+With `prefers-reduced-motion: reduce` there is no movement: a switch draws the indicator on the new
+item at once, as WinUI does with animations off, so the element never carries `moving`.
+
 The element also writes what each part of a movement is doing:
 
 * `--navigation-indicator-arrival` and `--navigation-indicator-follow` are the times the leading

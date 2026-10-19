@@ -64,6 +64,18 @@ function toCssColor(value: PropertyValue): string {
     return 'rgb(0, 0, 0)';
 }
 
+// A media query of the environment, or null where the engine has no matchMedia. A query an engine
+// does not know never matches, so an old engine simply takes the default path.
+function mediaQuery(query: string): MediaQueryList | null {
+    return typeof window.matchMedia === 'function' ? window.matchMedia(query) : null;
+}
+
+// Read per switch, so a change of the preference applies to the next movement without a reload.
+function prefersReducedMotion(): boolean {
+    const query = mediaQuery('(prefers-reduced-motion: reduce)');
+    return !!query && query.matches;
+}
+
 // The margins the canvas keeps on either side of the bar, to 0.01 px, so a resolved bound that
 // carries rounding error does not move the layout.
 function roundPad(value: number): number {
@@ -223,6 +235,11 @@ class IndicatorManager {
     }
 
     switch($from: AxNavigationItem | undefined, $to: AxNavigationItem): void {
+        // As in WinUI with animations off, the indicator is not moved: it is drawn on the new item.
+        if (prefersReducedMotion()) {
+            this.jump($to);
+            return;
+        }
         const interrupting = this.animationStartTime != null;
         this.fromRect = interrupting ? this.lastRect : null;
         // Time the new movement from the start, so the new target gets the whole speed instead of
@@ -239,6 +256,24 @@ class IndicatorManager {
         }
         this.cancelRest();
         this.schedule();
+    }
+
+    // Draws the indicator at rest on an item at once. A movement in flight is dropped, springs and
+    // mark included, so nothing is left running; the item is passed because the current one is
+    // only set after the switch.
+    private jump($to: AxNavigationItem): void {
+        if (this.frameHandle !== null) window.cancelAnimationFrame(this.frameHandle);
+        this.frameHandle = null;
+        this.animationStartTime = null;
+        this.fromRect = null;
+        this.lastRect = null;
+        this.$from = this.$container.currentItem;
+        this.$to = undefined;
+        this.cancelRest();
+        this.stopDeform();
+        this.markMoving(null);
+        this.resetDeform();
+        this.paintRest($to);
     }
 
     private schedule(): void {
@@ -391,12 +426,11 @@ class IndicatorManager {
 
     // Draws the bar of the current item with the numbers read now, and answers whether they
     // changed since the last paint.
-    private paintRest(): boolean {
+    private paintRest(item: AxNavigationItem | undefined = this.$container.currentItem): boolean {
         if (this.animationStartTime !== null) return false;
         const style = this.style || this.styleNow();
         this.values.values = this.binding.read();
         const changed = this.takeShapeKey();
-        const item = this.$container.currentItem;
         if (!item) {
             this.clear();
             return changed;

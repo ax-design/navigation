@@ -23,6 +23,8 @@ interface Driver {
     // Playwright only: a real key press, and the accessibility snapshot of an element.
     key?(key: string): Promise<void>;
     snapshot?(selector: string): Promise<string>;
+    // Playwright only: the reduced motion and forced colors preferences the page reads.
+    emulate?(reducedMotion: string, forcedColors: string): Promise<void>;
 }
 
 async function playwright(name: string, url: string): Promise<Driver> {
@@ -38,6 +40,8 @@ async function playwright(name: string, url: string): Promise<Driver> {
         eval: (script) => page.evaluate(script),
         key: (key) => page.keyboard.press(key),
         snapshot: hasSnapshot ? (selector) => page.locator(selector).ariaSnapshot() : undefined,
+        emulate: (reducedMotion, forcedColors) =>
+            page.emulateMedia({ reducedMotion: reducedMotion as 'reduce' | 'no-preference', forcedColors: forcedColors as 'active' | 'none' }),
         close: () => browser.close(),
     };
 }
@@ -73,7 +77,11 @@ async function drive(d: Driver) {
         if (state.result) return state.result;
         if (state.step && state.step !== state.ack) {
             if (state.step.startsWith('caps?')) {
-                await d.eval(`(window.__caps = ${JSON.stringify({ keys: !!d.key, snapshot: !!d.snapshot })})`);
+                await d.eval(`(window.__caps = ${JSON.stringify({ keys: !!d.key, snapshot: !!d.snapshot, emulate: !!d.emulate })})`);
+            } else if (state.step.startsWith('emulate:')) {
+                // emulate:reduce/active sets reduced motion and forced colors; the page sends the values.
+                const [reducedMotion, forcedColors] = state.step.slice('emulate:'.length).split('#')[0].split('/');
+                if (d.emulate) await d.emulate(reducedMotion, forcedColors);
             } else if (state.step.startsWith('key:')) {
                 // key:Tab#3 presses Tab; the number only keeps a repeated step distinct.
                 const key = state.step.slice('key:'.length).split('#')[0];

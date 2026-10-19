@@ -10,7 +10,7 @@ declare global {
         __result?: unknown;
         __step?: string;
         __ack?: string;
-        __caps?: { keys: boolean; snapshot: boolean };
+        __caps?: { keys: boolean; snapshot: boolean; emulate: boolean };
         __snapshot?: string;
     }
 }
@@ -111,10 +111,25 @@ function probeNav(vertical: boolean): AxNavigation {
     return nav;
 }
 
-async function capabilities(): Promise<{ keys: boolean; snapshot: boolean }> {
+async function capabilities(): Promise<{ keys: boolean; snapshot: boolean; emulate: boolean }> {
     await request('caps?');
-    return window.__caps || { keys: false, snapshot: false };
+    return window.__caps || { keys: false, snapshot: false, emulate: false };
 }
+
+// Playwright only: sets the preferences the page reads, for the checks that need them.
+const emulate = (reducedMotion: 'reduce' | 'no-preference', forcedColors: 'active' | 'none') =>
+    request('emulate:' + reducedMotion + '/' + forcedColors);
+
+// A navigation of three items, appended to the page, for the checks that need a fresh one.
+function makeNav(): AxNavigation {
+    const nav = document.createElement(AxNavigation.ElementName) as AxNavigation;
+    nav.innerHTML =
+        '<ax-navigation-item>One</ax-navigation-item><ax-navigation-item>Two</ax-navigation-item><ax-navigation-item>Three</ax-navigation-item>';
+    document.body.appendChild(nav);
+    return nav;
+}
+const itemsOf = (nav: AxNavigation) => Array.from(nav.querySelectorAll(AxNavigationItem.ElementName)) as AxNavigationItem[];
+const numberOf = (el: Element, name: string) => parseFloat(getComputedStyle(el).getPropertyValue(name)) || 0;
 
 // Mode detection: from the items, overridden by the mode attribute, and kept in step with the
 // items as they change. A none navigation warns, once.
@@ -490,6 +505,58 @@ async function selectChecks() {
     );
 }
 
+// Reduced motion: with the preference on, a switch draws the indicator on the new item at once and
+// leaves nothing running. With it off, the same switch takes several frames.
+async function motionChecks() {
+    // Where an animated switch settles: the reference for the reduced one.
+    await emulate('no-preference', 'none');
+    const settled = makeNav();
+    await frames(8);
+    itemsOf(settled)[2].click();
+    await frames(120);
+    const rest = painted(settled);
+    check('motion: an animated switch settles on the new item', !settled.hasAttribute('moving') && rest.count > 0, 'count ' + rest.count);
+    settled.remove();
+
+    await emulate('reduce', 'none');
+    const still = makeNav();
+    await frames(8);
+    itemsOf(still)[2].click();
+    check('reduced motion: no moving mark on the switch', !still.hasAttribute('moving'), 'moving=' + still.getAttribute('moving'));
+    await frames(2);
+    const drawn = painted(still);
+    check(
+        'reduced motion: the indicator is at rest on the new item within two frames',
+        near(drawn.left, rest.left) && near(drawn.right, rest.right) && near(drawn.top, rest.top) && near(drawn.bottom, rest.bottom) && near(drawn.count, rest.count, 2),
+        'drawn ' + drawn.left.toFixed(1) + '-' + drawn.right.toFixed(1) + ', settled ' + rest.left.toFixed(1) + '-' + rest.right.toFixed(1)
+    );
+    check(
+        'reduced motion: the movement properties are at rest',
+        numberOf(still, '--navigation-indicator-lead') === 0 && numberOf(still, '--navigation-indicator-trail') === 0,
+        'lead ' + numberOf(still, '--navigation-indicator-lead') + ', trail ' + numberOf(still, '--navigation-indicator-trail')
+    );
+    await frames(60);
+    const later = painted(still);
+    check(
+        'reduced motion: the indicator stays at rest',
+        !still.hasAttribute('moving') && near(later.left, rest.left) && near(later.right, rest.right),
+        'left ' + later.left.toFixed(1)
+    );
+    still.remove();
+
+    await emulate('no-preference', 'none');
+    const moving = makeNav();
+    await frames(8);
+    itemsOf(moving)[2].click();
+    let frameCount = 0;
+    while (moving.hasAttribute('moving') && frameCount < 200) {
+        await frames(1);
+        frameCount++;
+    }
+    check('without reduced motion the switch takes several frames', frameCount >= 5, 'frames ' + frameCount);
+    moving.remove();
+}
+
 async function run() {
     register();
     register(); // idempotent check
@@ -693,10 +760,15 @@ async function run() {
     );
     check('the same item is current after the moves', anim.currentItem === animOne, 'current ' + (anim.currentItem === animOne ? 'One' : 'other'));
 
+    // The preferences are emulated where the driver can: a browser without emulation skips them.
+    const caps = await capabilities();
+    if (caps.emulate) {
+        await motionChecks();
+    }
+
     await modeChecks();
     await roleChecks();
     // The snapshot is taken before any key moves the selection, so Alpha is the one selected.
-    const caps = await capabilities();
     if (caps.snapshot) await snapshotChecks();
     await authorChecks();
     if (caps.keys) await keyboardChecks();
