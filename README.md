@@ -282,3 +282,9 @@ ax-navigation[moving="backward"] {
 * **`SwitchEvent.detail.to`:** The highlighted element after user switched the tab;
 * **`SwitchEvent.detail.reason`:** Why it switched: `'pointer'` for a click, `'keyboard'` for the
   keys (Enter on a link included), or `'api'` for `select()` and the `currentItem` setter.
+
+## Changes in 0.1
+
+* Keyboard: the arrow keys, Home and End move between the items, Tab enters the current tab, and Enter on a link counts as the keyboard. Items get their roles, and `select()` switches from code; `SwitchEvent.detail.reason` tells how it switched.
+* The indicator moves at once under reduced motion, and is painted with `Highlight` in forced colors.
+* Built on Surface 0.3.
