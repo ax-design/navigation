@@ -7,7 +7,7 @@
       "dependencies": {
         "@ax-design/shape": "^0.3.0",
         "@ax-design/surface": "file:/home/losses/Development/ax-workspace/.morph/dist/ax-design-surface-0.4.0.tgz",
-        "@ax-design/typed-om": "^0.1.0",
+        "@ax-design/typed-om": "file:/home/losses/Development/ax-workspace/.morph/dist/ax-design-typed-om-0.2.0.tgz",
         "bezier-easing": "^2.1.0",
       },
       "devDependencies": {
@@ -23,7 +23,7 @@
 
     "@ax-design/surface": ["@ax-design/surface@/home/losses/Development/ax-workspace/.morph/dist/ax-design-surface-0.4.0.tgz", { "dependencies": { "@ax-design/shape": "^0.3.0", "@ax-design/typed-om": "file:/home/losses/Development/ax-workspace/.morph/dist/ax-design-typed-om-0.2.0.tgz" } }, "sha512-/7MWtJIIOVJAnTXpyVtmYJ6KqdHBldWfOSQBnIxv8eAO4SPdyZS5BqDDRAkFeKX/SvRkgvhYzX1063Y2zVqAPg=="],
 
-    "@ax-design/typed-om": ["@ax-design/typed-om@0.1.0", "", {}, "sha512-v3I8wDLMFbWDN9cZkDpy9qYonMQfqUU0DIL9DOChTO3dBRzWUk/taZZBUgmNTkA0kvn+g5NbB7pGcSuQAbz9cA=="],
+    "@ax-design/typed-om": ["@ax-design/typed-om@/home/losses/Development/ax-workspace/.morph/dist/ax-design-typed-om-0.2.0.tgz", {}, "sha512-t4nTci1MS5zTXV/z1aeQqPCn5nV4+Ee5Oipp5cYeAcdOPS2UF3VlirGtrIPdy9liBKg/B2rZUOI0KnZ/MKv4Pg=="],
 
     "@types/bezier-easing": ["@types/bezier-easing@2.1.6", "", { "dependencies": { "bezier-easing": "*" } }, "sha512-ntD54njPbI4ZUe+Fh+o2ezwqVsOkS61QQdBP2a8hIRhr2m33bkD4GpTPsyJlFg+bB4gG69FVKgKqm+8KKZ00WA=="],
 
@@ -42,8 +42,6 @@
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@8.12.1", "", {}, "sha512-nCiEcIx87oMw9u3Yzj2DuRBzv6p0e7akhy4HUPtpBiVWmAY3o6Phznst8QhmY1oLMttLgJ2tlAvsKuzCgBSoAw=="],
-
-    "@ax-design/surface/@ax-design/typed-om": ["@ax-design/typed-om@/home/losses/Development/ax-workspace/.morph/dist/ax-design-typed-om-0.2.0.tgz", {}, "sha512-t4nTci1MS5zTXV/z1aeQqPCn5nV4+Ee5Oipp5cYeAcdOPS2UF3VlirGtrIPdy9liBKg/B2rZUOI0KnZ/MKv4Pg=="],
 
     "@types/bezier-easing/bezier-easing": ["bezier-easing@3.2.0", "", {}, "sha512-QOKIYCgHd06gsQg0G9k1/JnzzZ+PT99qqUmgRHQ+r5PI/gsjCn0l7LXW6gtXoPhVJviIjP01xg9E7eNime9fVw=="],
 
