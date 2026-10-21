@@ -13,9 +13,9 @@ const deform = (name: string, initial: string): PropertySpec => ({
 });
 
 // The shape of the indicator is the Axiom surface contract: --ax-radius, --ax-corner-* and
-// --ax-edge-{top,right,bottom,left}-*. The general properties (--ax-edge-span and friends) are
-// not read here; they are registered from SHAPE.shared and reach every side through
-// SHAPE.fallbackCss, which the shadow root includes. See the surface README for the names.
+// --ax-edge-{top,right,bottom,left}-*. The general properties (--ax-edge-span and friends) come
+// in through SHAPE.read too, and shapeSpecFrom's fallback passes a general value on to each side
+// and corner that holds the auto sentinel. See the surface README for the names.
 export const NAVIGATION_PROPERTIES: PropertySpec[] = [
     ...SHAPE.read,
     {

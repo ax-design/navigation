@@ -1,4 +1,3 @@
-import { SHAPE } from '@ax-design/surface/schema';
 import IndicatorManager from './indicatorManager.js';
 import { directionOf } from './bar.js';
 
@@ -355,9 +354,6 @@ export class AxNavigation extends HTMLElement {
             '    </div>',
             '</div>',
             '<style>',
-            // The shape properties are written on the host, so the fallback that passes a
-            // general property to each side belongs in this shadow root.
-            SHAPE.fallbackCss || '',
             // The canvas covers the bar plus whatever an outward decoration needs on either
             // side of it: the inner pad is toward the content, the outer pad away from it.
             '    :host { --navigation-private-indicator-cross: calc(var(--navigation-indicator-width, 2px) + var(--navigation-private-indicator-pad-inner, 0px) + var(--navigation-private-indicator-pad-outer, 0px)); --navigation-private-indicator-outer: calc(var(--navigation-indicator-width, 2px) + var(--navigation-private-indicator-pad-outer, 0px)); }',

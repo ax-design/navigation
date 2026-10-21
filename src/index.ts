@@ -1,5 +1,4 @@
 import { canRegister, registerProperties } from '@ax-design/typed-om';
-import { SHAPE } from '@ax-design/surface/schema';
 import { AxNavigation, AxNavigationItem } from './CustomElements.js';
 import { NAVIGATION_PROPERTIES, SPEED_PROPERTY, WINDOW_PROPERTIES } from './schema.js';
 
@@ -23,10 +22,9 @@ export function register(): void {
             }
         }
     }
-    // The general shape properties (--ax-edge-span and friends) are registered apart from the
-    // ones the reader watches, the way surface does it: the shadow root's fallback CSS passes
-    // the general value on to each side and corner.
-    registerProperties(SHAPE.shared || []);
+    // The general shape properties (--ax-edge-span and friends) come in through SHAPE.read,
+    // which NAVIGATION_PROPERTIES spreads, and shapeSpecFrom falls back to a general value for
+    // each side and corner that holds the auto sentinel.
     registerProperties(NAVIGATION_PROPERTIES);
 
     if (!customElements.get(AxNavigation.ElementName)) {

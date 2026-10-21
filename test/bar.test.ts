@@ -84,12 +84,18 @@ describe('the ax contract drives the shape', () => {
         expect(shape.outline.segments.length).toBeGreaterThan(4);
     });
 
-    test('the fallback css passes a general property on to each side', () => {
-        const css = SHAPE.fallbackCss || '';
-        expect(css).toContain('--ax-edge-top-kind: var(--ax-edge-kind)');
-        expect(css).toContain('--ax-edge-bottom-span: var(--ax-edge-span)');
-        expect(css).toContain('--ax-corner-top-left-shoulder-radius: var(--ax-corner-shoulder-radius)');
-        expect((SHAPE.shared || []).some((spec) => spec.name === '--ax-edge-span')).toBe(true);
+    test('a general edge property reaches each side through the auto sentinel', () => {
+        // The general properties are read now (SHAPE.read), and shapeSpecFrom falls back to a
+        // general value when a side holds the auto sentinel.
+        expect((SHAPE.read || []).some((spec) => spec.name === '--ax-edge-span')).toBe(true);
+        const values = valuesWith({
+            '--ax-edge-span': px(24),
+            '--ax-edge-top-span': 'auto',
+            '--ax-edge-right-span': 'auto',
+            '--ax-edge-bottom-span': 'auto',
+            '--ax-edge-left-span': 'auto',
+        });
+        expect(shapeSpecFrom(values, 160, 32).edges.map((edge) => edge.span)).toEqual([24, 24, 24, 24]);
     });
 });
 
