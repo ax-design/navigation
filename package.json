@@ -31,8 +31,8 @@
     },
     "dependencies": {
         "@ax-design/shape": "^0.3.0",
-        "@ax-design/surface": "file:/home/losses/Development/ax-workspace/.morph/dist/ax-design-surface-0.4.0.tgz",
-        "@ax-design/typed-om": "file:/home/losses/Development/ax-workspace/.morph/dist/ax-design-typed-om-0.2.0.tgz",
+        "@ax-design/surface": "^0.4.0",
+        "@ax-design/typed-om": "^0.2.1",
         "bezier-easing": "^2.1.0"
     },
     "files": [
