@@ -1,6 +1,6 @@
 {
     "name": "@ax-design/navigation",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Web component that implement Navigation Indicator animation of Axiom Design System.",
     "main": "build/main.js",
     "module": "es/index.js",
@@ -31,8 +31,8 @@
     },
     "dependencies": {
         "@ax-design/shape": "^0.3.0",
-        "@ax-design/surface": "^0.4.0",
-        "@ax-design/typed-om": "^0.2.1",
+        "@ax-design/surface": "^0.4.1",
+        "@ax-design/typed-om": "^0.3.0",
         "bezier-easing": "^2.1.0"
     },
     "files": [

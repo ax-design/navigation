@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## 0.2.1
+
+- Depends on @ax-design/surface 0.4.1 and typed-om 0.3 (no duplicate copies next to packages that use them).
+
 ## 0.2.0
 
 - Breaking: built on @ax-design/surface@^0.4.0. The shape contract resolves general properties through the auto sentinel in shapeSpecFrom instead of fallback CSS. The direct dependency @ax-design/typed-om also upgrades to ^0.2.0.
